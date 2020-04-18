@@ -22,6 +22,27 @@ def load_image_and_mask(image_path):
 def load_image(path):
     return Image.open(str(path))
 
+# Pads Image and Mask with zeroes
+# Parameter: image and mask
+# Returns  : image and mask as a tuple
+def pad_image_and_mask(img, mask, new_size):
+    old_width, old_height = img.size
+    new_image = img.resize((new_size, new_size), Image.LANCZOS)
+    new_mask = mask.resize((new_size, new_size), Image.LANCZOS)
+
+    new_image = Image.new("RGB", (new_size, new_size))
+    new_image.paste(img, ((new_size-old_width)//2, (new_size-old_height)//2))
+
+    new_mask = Image.new("RGB", (new_size, new_size))
+    new_mask.paste(mask, ((new_size-old_width)//2, (new_size-old_height)//2))
+    return (new_image, new_mask)
+
+# Pads Image with zeroes
+# Parameter: image
+# Returns  : image padded
+def pad_image(img, new_size):
+    return img.resize((new_size, new_size), Image.LANCZOS)
+
 # Flips image and mask with respect to vertical axis
 # Parameter: image and mask
 # Returns  : image and mask as a tuple
