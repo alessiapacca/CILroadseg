@@ -76,7 +76,6 @@ def view_images(images, masks):
     n_images = len(images)
     fig = plt.figure()
     for n in range(n_images):
-        print(n)
         fig.add_subplot(np.ceil(n_images * 2/float(cols)), cols, 2 * n + 1)
         plt.imshow(images[n])
         fig.add_subplot(np.ceil(n_images * 2/float(cols)), cols, 2 * n + 2)
@@ -126,3 +125,30 @@ def rotate_img_and_mask(img, mask, angle):
 # Returns   : Image
 def rotate_img(img, angle):
     return img.rotate(angle)
+
+# Crops image and mask to create a list of squares resized
+# Parameters: image and mask to crop, height and width of new cropped images
+# Returns   : list of new cropped images and masks
+def crop_image_and_mask(img, mask, height, width):
+    list_img = []
+    list_mask = []
+    imgwidth, imgheight = img.size
+    for i in range(0,imgheight,height):
+        for j in range(0,imgwidth,width):
+            box = (j, i, j+width, i+height)
+            a = img.crop(box)
+            a = a.resize((imgwidth, imgheight), Image.LANCZOS)
+            list_img.append(a)
+            a = mask.crop(box)
+            a = a.resize((imgwidth, imgheight), Image.LANCZOS)
+            list_mask.append(a)
+    return (list_img, list_mask)
+
+# Saves images and masks inside lists into a new directory.
+# Requires a "saved/images" and a "saved/groundtruth" folder.
+# Parameters : images and masks list to save
+def save_images(imgs, masks):
+    n_images = len(imgs)
+    for i in range(n_images):
+        imgs[i].save("saved" + os.path.sep + "images" + os.path.sep + str(i) + ".png","PNG")
+        masks[i].save("saved" + os.path.sep + "groundtruth" + os.path.sep + str(i) + ".png","PNG")
