@@ -152,3 +152,28 @@ def save_images(imgs, masks):
     for i in range(n_images):
         imgs[i].save("saved" + os.path.sep + "images" + os.path.sep + str(i) + ".png","PNG")
         masks[i].save("saved" + os.path.sep + "groundtruth" + os.path.sep + str(i) + ".png","PNG")
+
+def img_crop_gt(im, w, h, stride):
+    """ Crop an image into patches (this method is intended for ground truth images). """
+    assert len(im.shape) == 2, 'Expected greyscale image.'
+    list_patches = []
+    imgwidth = im.shape[0]
+    imgheight = im.shape[1]
+    for i in range(0,imgheight,stride):
+        for j in range(0,imgwidth,stride):
+            im_patch = im[j:j+w, i:i+h]
+            list_patches.append(im_patch)
+    return list_patches
+    
+def img_crop(im, w, h, stride, padding):
+    """ Crop an image into patches, taking into account mirror boundary conditions. """
+    assert len(im.shape) == 3, 'Expected RGB image.'
+    list_patches = []
+    imgwidth = im.shape[0]
+    imgheight = im.shape[1]
+    im = np.lib.pad(im, ((padding, padding), (padding, padding), (0,0)), 'reflect')
+    for i in range(padding,imgheight+padding,stride):
+        for j in range(padding,imgwidth+padding,stride):
+            im_patch = im[j-padding:j+w+padding, i-padding:i+h+padding, :]
+            list_patches.append(im_patch)
+    return list_patches
