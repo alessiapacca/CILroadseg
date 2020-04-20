@@ -187,3 +187,13 @@ def img_crop(im, w, h, stride, padding):
             im_patch = im[j-padding:j+w+padding, i-padding:i+h+padding, :]
             list_patches.append(im_patch)
     return list_patches
+
+def get_classification_results(y, y_test):
+    """
+    Get the ratio of correct answers.
+    """
+    y = y.reshape(-1) # Linearize
+    y_test = y_test.reshape(-1) # Linearize
+    diff = y - y_test
+    correct = np.sum(diff == 0)
+    return correct / y_test.size
