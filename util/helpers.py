@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import pathlib
+import matplotlib.image as mpimg
 
 # Loads image and mask given the image path.
 # Parameter: image_path
@@ -19,8 +20,8 @@ def load_image_and_mask(image_path):
 # Loads image given the image path.
 # Parameter: image_path
 # Returns  : image as a Pillow.Image
-def load_image(path):
-    return Image.open(str(path))
+def load_image(infilename):
+    return mpimg.imread(infilename)
 
 # Pads Image and Mask with zeroes
 # Parameter: image and mask
@@ -188,6 +189,14 @@ def img_crop(im, w, h, stride, padding):
             list_patches.append(im_patch)
     return list_patches
 
+# Create 16*16 patches for ground truth images. 
+def create_patches_gt(X, patch_size, stride):
+    img_patches = np.asarray([img_crop_gt(X[i], patch_size, patch_size, stride) for i in range(X.shape[0])])
+    # Linearize list
+    img_patches = img_patches.reshape(-1, img_patches.shape[2], img_patches.shape[3])
+    return img_patches
+
+# Get Percentage of correct answers
 def get_classification_results(y, y_test):
     """
     Get the ratio of correct answers.
