@@ -153,6 +153,11 @@ def save_images(imgs, masks):
         imgs[i].save("saved" + os.path.sep + "images" + os.path.sep + str(i) + ".png","PNG")
         masks[i].save("saved" + os.path.sep + "groundtruth" + os.path.sep + str(i) + ".png","PNG")
 
+# Crop an image into patches. This method expects grey scale images. 
+# Parameters : Image to be cropped, width, height and stride of the patch. Each patch of w*h will be cropped out. 
+# Stride determines the shift of the window. 
+# Returns : A list containing the cropped files. 
+
 def img_crop_gt(im, w, h, stride):
     """ Crop an image into patches (this method is intended for ground truth images). """
     assert len(im.shape) == 2, 'Expected greyscale image.'
@@ -164,7 +169,12 @@ def img_crop_gt(im, w, h, stride):
             im_patch = im[j:j+w, i:i+h]
             list_patches.append(im_patch)
     return list_patches
-    
+ 
+# Crop an image into patches. 
+# Parameters : Image to be cropped, width, height and stride, and padding required.Each patch of w*h will be cropped out. 
+# Stride determines the shift of the window. 
+# Returns : A list containing the cropped files. 
+
 def img_crop(im, w, h, stride, padding):
     """ Crop an image into patches, taking into account mirror boundary conditions. """
     assert len(im.shape) == 3, 'Expected RGB image.'
