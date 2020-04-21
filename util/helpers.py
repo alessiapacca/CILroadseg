@@ -193,7 +193,7 @@ def img_crop(im, w, h, stride, padding):
 def create_patches_gt(X, patch_size, stride):
     img_patches = np.asarray([img_crop_gt(X[i], patch_size, patch_size, stride) for i in range(X.shape[0])])
     # Linearize list
-    img_patches = img_patches.reshape(-1, img_patches.shape[2], img_patches.shape[3])
+    img_patches = img_patches.reshape((-1, img_patches.shape[2], img_patches.shape[3]))
     return img_patches
 
 # Get Percentage of correct answers
@@ -206,3 +206,8 @@ def get_classification_results(y, y_test):
     diff = y - y_test
     correct = np.sum(diff == 0)
     return correct / y_test.size
+
+
+def patchify(Y, patch_size):
+    patches = (np.mean(create_patches_gt(Y, patch_size, patch_size), axis=(1, 2)) > 0.25) * 1
+    return patches.reshape(Y.shape[0], -1)
