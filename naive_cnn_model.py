@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
 from keras.optimizers import Adam
-from keras.utils import np_utils
-from keras import backend as K
-from keras.regularizers import l2
-from keras.layers import LeakyReLU
-from keras.callbacks import ReduceLROnPlateau, EarlyStopping
-from helpers import *
+from keras.callbacks import EarlyStopping
+from util.helpers import *
+from util.model_base import ModelBase
 
-class NaiveCnnModel:
+class NaiveCnnModel(ModelBase):
     
     def __init__(self):
         """ Construct a CNN classifier. """
@@ -20,8 +17,6 @@ class NaiveCnnModel:
   
         
     def initialize(self):
-        
-        print('Initialize cnn')
         patch_size = self.patch_size
         pool_size = (2, 2)
         input_shape = (patch_size, patch_size, 3)
@@ -71,15 +66,13 @@ class NaiveCnnModel:
         stop_callback = EarlyStopping(monitor='accuracy', min_delta=0.0001, patience=11, verbose=1, mode='auto')
         self.history = self.cnn.fit(X, Y, verbose=True, epochs = 10, callbacks=[stop_callback])
         
-        print('Training completed')
-        
     def save(self, filename):
         """ Save the weights of this model. """
-        self.model.save_weights(filename)
+        self.cnn.save_weights(filename)
         
     def load(self, filename):
         """ Load the weights for this model from a file. """
-        self.model.load_weights(filename)
+        self.cnn.load_weights(filename)
         
     def classify(self, X):
         """
@@ -87,6 +80,8 @@ class NaiveCnnModel:
         This method must be called after "train".
         Returns a list of predictions.
         """
+        num_of_img = X.shape[0]
+
         # Subdivide the images into blocks
         patch_size = self.patch_size
         img_patches = [img_crop(X[i], patch_size, patch_size, patch_size, 0) for i in range(X.shape[0])]
@@ -98,7 +93,7 @@ class NaiveCnnModel:
         Z = self.cnn.predict(img_patches)
         # Label points with probability greater than 0.5 as 1 and 0 otherwise
         Z = ((Z)> 0.5).astype(int)
-        
-        return  (Z.reshape(X.shape[0], -1))
+
+        return Z.reshape((num_of_img, -1))
     
         

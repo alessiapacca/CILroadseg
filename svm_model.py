@@ -3,7 +3,7 @@
 import numpy as np
 from sklearn import svm
 from sklearn.preprocessing import PolynomialFeatures
-from helpers import *
+from util.helpers import *
 
 class SvmModel:
     
@@ -12,11 +12,9 @@ class SvmModel:
         Construct a SVM classifier.
         """
         self.patch_size = 16
-        print('initialize svm class')
 
     def initialize(self):
         """ Initialize or reset this model. """
-        print('Create SVM Classifier with parameters, gamma= rbf, kernel=rbf, degree=4')
         self.svm = svm.SVC(gamma='auto', kernel='poly', degree = 4)
     
     def extract_features(self, img):
@@ -40,7 +38,7 @@ class SvmModel:
     # Extract features for a given image
     def extract_img_features(self, filename):
         img = load_image(filename)
-        img_patches = img_crop(img, patch_size, patch_size)
+        img_patches = img_crop(img, self.patch_size, self.patch_size)
         X = np.asarray([self.extract_features(img_patches[i]) for i in range(len(img_patches))])
         return X
     
@@ -71,10 +69,7 @@ class SvmModel:
         Y = np.asarray([value_to_class(np.mean(gt_patches[i])) for i in range(len(gt_patches))])
            
         X = self.poly_fit(X)
-        print('Training Started')
         self.svm.fit(X, Y)
-        
-        print('Training completed')
         
     def save(self, filename):
         # Nothing to do
@@ -96,6 +91,7 @@ class SvmModel:
         X = np.asarray([self.extract_features(img_patches[i]) for i in range(len(img_patches))])
         X = self.poly_fit(X)
         Z = self.svm.predict(X)
+
         # Regroup patches into images
-        return Z.reshape(X.shape[0], -1)
+        return Z.reshape((X.shape[0], -1))
         

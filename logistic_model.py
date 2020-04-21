@@ -3,9 +3,10 @@
 import numpy as np
 from sklearn import linear_model
 from sklearn.preprocessing import PolynomialFeatures
-from utility import *
+from util.helpers import *
+from util.model_base import ModelBase
 
-class LogisticModel:
+class LogisticModel(ModelBase):
     
     def __init__(self):
         """
@@ -38,7 +39,7 @@ class LogisticModel:
     # Extract features for a given image
     def extract_img_features(self, filename):
         img = load_image(filename)
-        img_patches = img_crop(img, patch_size, patch_size)
+        img_patches = img_crop(img, self.patch_size, self.patch_size)
         X = np.asarray([self.extract_features(img_patches[i]) for i in range(len(img_patches))])
         return X
     
@@ -71,8 +72,6 @@ class LogisticModel:
         X = self.poly_fit(X)
         self.logreg.fit(X, Y)
         
-        print('Training completed')
-        
     def save(self, filename):
         # Nothing to do
         return
@@ -87,12 +86,15 @@ class LogisticModel:
         This method must be called after "train".
         Returns a list of predictions.
         """
+        num_of_img = X.shape[0]
+
         patch_size = self.patch_size
         img_patches = [img_crop(X[i], patch_size, patch_size, patch_size, 0) for i in range(X.shape[0])]
         img_patches = np.asarray([img_patches[i][j] for i in range(len(img_patches)) for j in range(len(img_patches[i]))])
         X = np.asarray([self.extract_features(img_patches[i]) for i in range(len(img_patches))])
         X = self.poly_fit(X)
         Z = self.logreg.predict(X)
+
         # Regroup patches into images
-        return (Z.reshape(X.shape[0], -1))
+        return Z.reshape((num_of_img, -1))
         
