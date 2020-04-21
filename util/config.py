@@ -6,6 +6,9 @@ import numpy as np
 RND_SEED = 1
 
 
+# shape of output: (number of images, width, height)
+
+
 # score function
 def score(Y, Y_star):
     Y = Y.reshape(-1)           # vectorize

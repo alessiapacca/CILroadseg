@@ -23,6 +23,9 @@ def validate_fold(model, fold, non_fold, X, Y):
 
     Z = model.classify(X_te)
 
+    if Z.shape != Y_te.shape:
+        raise ValueError('The shape of the data returned by the model is not equal')
+
     # NOTE: this assumes all the data to be already vectorized and with values in {0, 1}.
     return score(Z, Y_te)
 
@@ -49,7 +52,7 @@ def cross_validate(model, K, X, Y):
         non_fold_indices = perm[np.arange(perm.shape[0]) != i].ravel()
 
         results[i] = validate_fold(model, fold_indices, non_fold_indices, X, Y)
-        print("Fold #"+ str(i) +": "+ results[i])
+        print("Fold #" + str(i+1) + ": " + str(results[i]))
 
     print("Cross Validation done:")
     print(results)
