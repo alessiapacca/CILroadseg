@@ -24,7 +24,7 @@ def validate_fold(model, fold, non_fold, X, Y):
 
     Z = model.classify(X_te)
 
-    Y_te = patchify(Y_te, 16)
+    #Y_te = patchify(Y_te, 16)
 
     if Z.shape != Y_te.shape:
         raise ValueError('The model returned data with different shape: (' + str(Z.shape) + ' vs ' + str(Y_te.shape) + ')')

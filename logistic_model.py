@@ -87,6 +87,7 @@ class LogisticModel(ModelBase):
         Returns a list of predictions.
         """
         num_of_img = X.shape[0]
+        img_size = (X.shape[1], X.shape[2])
 
         patch_size = self.patch_size
         img_patches = [img_crop(X[i], patch_size, patch_size, patch_size, 0) for i in range(X.shape[0])]
@@ -95,6 +96,4 @@ class LogisticModel(ModelBase):
         X = self.poly_fit(X)
         Z = self.logreg.predict(X)
 
-        # Regroup patches into images
-        return Z.reshape((num_of_img, -1))
-        
+        return recompose(Z, num_of_img, img_size, patch_size)

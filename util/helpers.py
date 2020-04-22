@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import os
 import pathlib
 import matplotlib.image as mpimg
+import math
 
 # Loads image and mask given the image path.
 # Parameter: image_path
@@ -211,3 +212,32 @@ def get_classification_results(y, y_test):
 def patchify(Y, patch_size):
     patches = (np.mean(create_patches_gt(Y, patch_size, patch_size), axis=(1, 2)) > 0.25) * 1
     return patches.reshape(Y.shape[0], -1)
+
+# assumes one classification per patch
+def recompose(Y, num_of_img, img_size, patch_size):
+    Y = Y.reshape((num_of_img, math.ceil(img_size[0] / patch_size), math.ceil(img_size[1] / patch_size)))
+
+    Y = np.repeat(Y, patch_size, axis=1)
+    Y = np.repeat(Y, patch_size, axis=2)
+
+    return Y[:, 0:img_size[0], 0:img_size[1]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

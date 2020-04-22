@@ -81,19 +81,18 @@ class NaiveCnnModel(ModelBase):
         Returns a list of predictions.
         """
         num_of_img = X.shape[0]
+        img_size = (X.shape[1], X.shape[2])
 
         # Subdivide the images into blocks
         patch_size = self.patch_size
         img_patches = [img_crop(X[i], patch_size, patch_size, patch_size, 0) for i in range(X.shape[0])]
         img_patches = np.asarray([img_patches[i][j] for i in range(len(img_patches)) for j in range(len(img_patches[i]))])
-             
-        X = img_patches
-        
+
         # Run prediction
         Z = self.cnn.predict(img_patches)
         # Label points with probability greater than 0.5 as 1 and 0 otherwise
-        Z = ((Z)> 0.5).astype(int)
+        Z = (Z > 0.5).astype(int)
 
-        return Z.reshape((num_of_img, -1))
+        return recompose(Z, num_of_img, img_size, patch_size)
     
         
