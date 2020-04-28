@@ -1,6 +1,5 @@
 
 from util.config import *
-from util.helpers import patchify
 
 import numpy as np
 
@@ -23,8 +22,6 @@ def validate_fold(model, fold, non_fold, X, Y):
     model.train(Y_tr, X_tr)
 
     Z = model.classify(X_te)
-
-    #Y_te = patchify(Y_te, 16)
 
     if Z.shape != Y_te.shape:
         raise ValueError('The model returned data with different shape: (' + str(Z.shape) + ' vs ' + str(Y_te.shape) + ')')

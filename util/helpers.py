@@ -209,10 +209,6 @@ def get_classification_results(y, y_test):
     return correct / y_test.size
 
 
-def patchify(Y, patch_size):
-    patches = (np.mean(create_patches_gt(Y, patch_size, patch_size), axis=(1, 2)) > 0.25) * 1
-    return patches.reshape(Y.shape[0], -1)
-
 # assumes one classification per patch
 def recompose(Y, num_of_img, img_size, patch_size):
     Y = Y.reshape((num_of_img, math.ceil(img_size[0] / patch_size), math.ceil(img_size[1] / patch_size)))
