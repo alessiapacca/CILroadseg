@@ -107,6 +107,9 @@ class Decomposer(ModelBase):
 
         return self.recompose(Y_pred, num_of_img, img_size)
 
+    def summary(self):
+        self.model.summary()
+
     def save(self, filename):
         self.model.save(filename)
 
