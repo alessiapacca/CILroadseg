@@ -11,6 +11,7 @@ from decomposer import *
 from util.config import *
 from keras.optimizers import Adam
 from keras.utils import np_utils
+from keras.callbacks import EarlyStopping
 
 class Cnn_Model(ModelBase):
     def __init__(self):
@@ -65,12 +66,13 @@ class Cnn_Model(ModelBase):
         adam = Adam(lr=0.001)  # Adam optimizer with default initial learning rate
         self.model.compile(optimizer=adam, loss='binary_crossentropy', metrics=['accuracy'])
 
+        early_stopping = EarlyStopping(monitor='loss', min_delta=0.0001, patience=11, verbose=1, mode='auto')
         #np.random.seed(3), needed?
         self.model.fit_generator(self.generator_batch(generator),
                                  steps_per_epoch=steps_per_epoch,
                                  epochs=epochs,
                                  verbose=1,
-                                 callbacks=None)
+                                 callbacks=[early_stopping])
 
     #TODO write "classify" method
     def classify(self, X):
