@@ -1,3 +1,4 @@
+
 import numpy as np
 from util.helpers import *
 from util.model_base import ModelBase
@@ -16,12 +17,12 @@ from keras.callbacks import EarlyStopping
 class Cnn_Model(ModelBase):
     def __init__(self):
         print("initialize model")
-        self.model = ResNet50(weights = "imagenet", include_top = False)
+        self.model = None
 
 
     def initialize(self):
         #resnet initialization
-        #model = ResNet50(weights = "imagenet", include_top = False)
+        model = ResNet50(weights = "imagenet", include_top = False)
         x = self.model.output
         x = GlobalMaxPooling2D()(x)
         x = Dense(1024, activation='relu')(x)
@@ -82,6 +83,5 @@ class Cnn_Model(ModelBase):
 
         # Regroup patches into images
         return Z
-
 
 

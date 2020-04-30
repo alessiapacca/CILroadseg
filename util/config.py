@@ -7,7 +7,7 @@ RND_SEED = 1
 patch_size = 16
 batch_size = 250
 steps_per_epoch = 200
-epochs = 200
+epochs = 20
 window_size = 72
 
 
