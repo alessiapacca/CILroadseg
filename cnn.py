@@ -1,7 +1,6 @@
 
-from keras.applications.resnet50 import ResNet50
-from keras.models import Model
-from keras.layers import Dense, GlobalMaxPooling2D
+from keras import Sequential
+from keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten
 from decomposer import *
 from util.config import *
 from keras.optimizers import Adam
@@ -22,33 +21,33 @@ def batch_generator(bootstrap):
         yield (X_batch, Y_batch)
 
 
-class ResnetModel(ModelBase):
+class CNNModel(ModelBase):
 
-    def __init__(self):
+    def __init__(self, patch_size = 16, window_size = 72):
         self.model = None
 
+        self.patch_size = patch_size
+        self.window_size = window_size
+
     def initialize(self):
-        self.model = ResNet50(weights = "imagenet", include_top = False)
+        input_shape = (self.window_size, self.window_size, 3)
 
-        x = self.model.output
-        x = GlobalMaxPooling2D()(x)
-        x = Dense(1024, activation='relu')(x)
-        x = Dense(1024, activation='relu')(x)
-        x = Dense(512, activation='relu')(x)
+        self.cnn = Sequential()
+        self.cnn.add(Conv2D(filters=32, kernel_size=(5, 5), activation='relu', input_shape=input_shape))
 
-        # last layer specifies the number of outputs. We have a binary output, but it's better to use a single unit in the last dense layer.
-        # https://stackoverflow.com/questions/54797065/resnet-for-binary-classification-just-2-values-of-cross-validation-accuracy
-        x = Dense(2, activation='sigmoid')(x)
-        self.model = Model(inputs=self.model.input, outputs=x)
-        self.model.summary()
-        for i, layer in enumerate(self.model.layers):
-            print(i, layer.name)
+        self.cnn.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
+        self.cnn.add(Dropout(0.25))
+        self.cnn.add(Conv2D(filters=64, kernel_size=(5, 5), activation='relu'))
+        self.cnn.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
+        self.cnn.add(Dropout(0.25))
+        self.cnn.add(Flatten())
 
-        for layer in self.model.layers[:75]:
-            layer.trainable = False
+        self.cnn.add(Dense(128, activation='relu'))
+        self.cnn.add(Dropout(0.5))
+        self.cnn.add(Dense(1, activation='sigmoid'))
 
-        for layer in self.model.layers[75:]:
-            layer.trainable = True
+        opt = Adam(lr=0.001)
+        self.cnn.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 
     def load(self, filename):
         self.model.load_weights(filename)
@@ -59,11 +58,6 @@ class ResnetModel(ModelBase):
     def train_online(self, generator):
         # this generator does the bootstrap of a single sample.
         # batch_generator will create batches of these samples
-
-        # TODO choose an optimizer, and a loss function
-        adam = Adam(lr=0.001)  # Adam optimizer with default initial learning rate
-
-        self.model.compile(optimizer=adam, loss='binary_crossentropy', metrics=['accuracy'])
 
         callbacks = [
             EarlyStopping(monitor='loss', patience=2, verbose=1, mode='auto')
@@ -78,6 +72,6 @@ class ResnetModel(ModelBase):
 
     def classify(self, X):
         Z = self.model.predict(X)
-        Z = (Z[:, 0] < Z[:, 1]) * 1
+        Z = (Z > 0.5) * 1
 
         return Z
