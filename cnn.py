@@ -31,22 +31,27 @@ class CNNModel(ModelBase):
     def initialize(self):
         input_shape = (self.window_size, self.window_size, 3)
 
-        self.cnn = Sequential()
-        self.cnn.add(Conv2D(filters=32, kernel_size=(5, 5), activation='relu', input_shape=input_shape))
+        self.model = Sequential()
 
-        self.cnn.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
-        self.cnn.add(Dropout(0.25))
-        self.cnn.add(Conv2D(filters=64, kernel_size=(5, 5), activation='relu'))
-        self.cnn.add(MaxPooling2D(pool_size=(2, 2), padding='same'))
-        self.cnn.add(Dropout(0.25))
-        self.cnn.add(Flatten())
+        layers = [
+            Conv2D(filters=32, kernel_size=(5, 5), activation='relu', input_shape=input_shape),
+            MaxPooling2D(pool_size=(2, 2), padding='same'),
+            Dropout(0.25),
+            Conv2D(filters=64, kernel_size=(5, 5), activation='relu'),
+            MaxPooling2D(pool_size=(2, 2), padding='same'),
+            Dropout(0.25),
+            Flatten(),
 
-        self.cnn.add(Dense(128, activation='relu'))
-        self.cnn.add(Dropout(0.5))
-        self.cnn.add(Dense(1, activation='sigmoid'))
+            Dense(128, activation='relu'),
+            Dropout(0.5),
+            Dense(1, activation='sigmoid')
+        ]
+
+        for layer in layers:
+            self.model.add(layer)
 
         opt = Adam(lr=0.001)
-        self.cnn.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
+        self.model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 
     def load(self, filename):
         self.model.load_weights(filename)
