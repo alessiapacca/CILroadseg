@@ -12,11 +12,10 @@ def batch_generator(bootstrap):
     while 1:
         # create one batch
         X_batch = np.empty((batch_size, window_size, window_size, 3))
-        Y_batch = np.empty((batch_size, 2))
+        Y_batch = np.empty((batch_size))
 
         for i in range(batch_size):
-            label, X_batch[i] = next(bootstrap)
-            Y_batch[i] = np_utils.to_categorical(label, 2)
+            Y_batch[i], X_batch[i] = next(bootstrap)
 
         yield (X_batch, Y_batch)
 
