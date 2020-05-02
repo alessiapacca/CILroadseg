@@ -25,3 +25,7 @@ def view_image_mask2(x, y, y_true):
     plt.imshow(Image.fromarray(np.uint8(np.transpose(y) * 255), 'L'))
     plt.figure()
     plt.imshow(Image.fromarray(np.uint8(np.transpose(y_true) * 255), 'L'))
+
+
+def save_image(x, filename):
+    Image.fromarray(np.uint8(np.transpose(x, axes=[1, 0, 2]) * 255)).save(filename)
