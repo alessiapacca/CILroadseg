@@ -82,6 +82,11 @@ def nb_save_model(model, weights_file):
 def nb_predict_masks(model, test_dir, test_masks_dir):
     print("Predicting test cases... ")
 
+    try:
+        os.mkdir(test_masks_dir)
+    except:
+        pass
+
     files = os.listdir(test_dir)
     numfiles = len(files)
 
@@ -97,4 +102,4 @@ def nb_predict_masks(model, test_dir, test_masks_dir):
         k += 1
         sys.stdout.write("\rProgress: " + str(k * 100 // numfiles) + "%")
 
-    print("Progress: done.")
+    print("\rProgress: done.")

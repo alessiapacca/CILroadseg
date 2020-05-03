@@ -55,18 +55,18 @@ def cross_validate(model, K, X, Y):
         accuracy_v[i], fscore_v[i] = validate_fold(model, fold_indices, non_fold_indices, X, Y)
         print("Fold #" + str(i+1) + ": ")
         print("    Accuracy: " + str(accuracy_v[i]))
-        print("Mean F Score: " + str(fscore_v[i]))
+        print("     F Score: " + str(fscore_v[i]))
 
     print()
     print("Cross Validation done:")
     print()
 
-    print("Accuracy: "+ accuracy_v)
+    print("Accuracy: "+ str(accuracy_v))
     print("AVG: "+ str(np.mean(accuracy_v)))
     print("STD: "+ str(np.std(accuracy_v)))
     print()
 
-    print("Mean F Score: "+ fscore_v)
+    print("F Score: "+ str(fscore_v))
     print("AVG: "+ str(np.mean(fscore_v)))
     print("STD: "+ str(np.std(fscore_v)))
     print()
