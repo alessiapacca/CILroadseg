@@ -27,7 +27,7 @@ def validate_fold(model, fold, non_fold, X, Y):
         raise ValueError('The model returned data with different shape: (' + str(Z.shape) + ' vs ' + str(Y_te.shape) + ')')
 
     # NOTE: this assumes all the data to be already vectorized and with values in {0, 1}.
-    return score(Z, Y_te)
+    return accuracy(Z, Y_te), mean_f_score(Z, Y_te)
 
 
 #
@@ -45,18 +45,28 @@ def cross_validate(model, K, X, Y):
     fold_size = int(Y.shape[0] / K)
     # range of i-th fold is [i*fold_size, (i+1)*fold_size]
 
-    results = np.zeros(K)
+    accuracy_v = np.empty(K)
+    fscore_v = np.empty(K)
 
     for i in range(K):
         fold_indices = perm[i * fold_size : (i + 1) * fold_size]
         non_fold_indices = perm[np.arange(perm.shape[0]) != i].ravel()
 
-        results[i] = validate_fold(model, fold_indices, non_fold_indices, X, Y)
-        print("Fold #" + str(i+1) + ": " + str(results[i]))
+        accuracy_v[i], fscore_v[i] = validate_fold(model, fold_indices, non_fold_indices, X, Y)
+        print("Fold #" + str(i+1) + ": ")
+        print("    Accuracy: " + accuracy_v[i])
+        print("Mean F Score: " + fscore_v[i])
 
     print()
     print("Cross Validation done:")
-    print(results)
+    print()
 
-    print("AVG: "+ str(np.mean(results)))
-    print("STD: "+ str(np.std(results)))
+    print("Accuracy: "+ accuracy_v)
+    print("AVG: "+ str(np.mean(accuracy_v)))
+    print("STD: "+ str(np.std(accuracy_v)))
+    print()
+
+    print("Mean F Score: "+ fscore_v)
+    print("AVG: "+ str(np.mean(fscore_v)))
+    print("STD: "+ str(np.std(fscore_v)))
+    print()
