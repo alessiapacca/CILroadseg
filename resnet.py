@@ -1,7 +1,7 @@
 
 from keras.applications.resnet50 import ResNet50
 from keras.models import Model
-from keras.layers import Dense, GlobalMaxPooling2D
+from keras.layers import Dense, GlobalMaxPooling2D, Dropout
 from decomposer import *
 from util.config import *
 from keras.optimizers import Adam
@@ -32,9 +32,8 @@ class ResnetModel(ModelBase):
 
         x = self.model.output
         x = GlobalMaxPooling2D()(x)
-        x = Dense(1024, activation='relu')(x)
-        x = Dense(1024, activation='relu')(x)
-        x = Dense(512, activation='relu')(x)
+        x = Dense(64, activation='relu')(x)
+        x = Dropout(0.5)(x)
 
         # last layer specifies the number of outputs. We have a binary output, but it's better to use a single unit in the last dense layer.
         # https://stackoverflow.com/questions/54797065/resnet-for-binary-classification-just-2-values-of-cross-validation-accuracy
