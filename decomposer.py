@@ -5,6 +5,15 @@ import numpy as np
 from util.helpers import img_crop
 from util.model_base import ModelBase
 
+
+# Pad given image applying reflect on borders
+def pad_image(X, padding):
+    return np.lib.pad(X, ((padding, padding), (padding, padding), (0, 0)), 'reflect')
+
+def pad_gt(Y, padding):
+    return np.lib.pad(Y, ((padding, padding), (padding, padding)), 'reflect')
+
+
 #
 # Decorator class: decomposes images into fixed-size patches, does a patch-wise classification and then
 #                  recomposes the patches into an image
@@ -28,6 +37,15 @@ class Decomposer(ModelBase):
         self.model.initialize()
 
     def train(self, Y, X):
+
+        padding = (self.window_size - self.focus_size) // 2
+
+        X_pad = np.empty((X.shape[0], X.shape[1] + 2*padding, X.shape[2] + 2*padding, X.shape[3]))
+        Y_pad = np.empty((Y.shape[0], Y.shape[1] + 2*padding, Y.shape[2] + 2*padding))
+
+        for i in range(X.shape[0]):
+            X_pad[i] = pad_image(X[i], padding)
+            Y_pad[i] = pad_gt(Y[i], padding)
 
         def bootstrap(Y, X):
             window_size = self.window_size
@@ -64,7 +82,7 @@ class Decomposer(ModelBase):
 
                 yield Y_sample, X_sample
 
-        self.train_online(bootstrap(Y, X))
+        self.train_online(bootstrap(Y_pad, X_pad))
 
     def train_online(self, generator):
         self.model.train_online(generator)
