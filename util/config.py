@@ -26,4 +26,4 @@ def mean_f_score(Y, Y_star):
     Y = Y.reshape(-1)           # vectorize
     Y_star = Y_star.reshape(-1) # vectorize
 
-    return f1_score(Y_star, Y, average='samples')
+    return f1_score(Y_star, Y)
