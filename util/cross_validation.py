@@ -1,7 +1,6 @@
 
 from util.config import *
-
-import numpy as np
+from util.helpers import *
 
 
 #
@@ -22,10 +21,10 @@ def validate_fold(model, fold, non_fold, X, Y):
     model.train(Y_tr, X_tr)
 
     Z = model.classify(X_te)
-
+    
     if Z.shape != Y_te.shape:
         raise ValueError('The model returned data with different shape: (' + str(Z.shape) + ' vs ' + str(Y_te.shape) + ')')
-
+    
     # NOTE: this assumes all the data to be already vectorized and with values in {0, 1}.
     return accuracy(Z, Y_te), mean_f_score(Z, Y_te)
 
@@ -37,7 +36,7 @@ def validate_fold(model, fold, non_fold, X, Y):
 # X, Y - numpy array containing training data (input, labels)
 #
 def cross_validate(model, K, X, Y):
-    np.random.seed(RND_SEED) # fix randomness
+    #np.random.seed(RND_SEED) # fix randomness
 
     perm = np.random.permutation(Y.shape[0]) # randomize folds
     # Y.shape[0] is the number of samples

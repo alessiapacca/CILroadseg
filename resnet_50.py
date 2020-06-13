@@ -121,7 +121,6 @@ class ResnetModel(ModelBase):
         # Stops the training process upon convergence
         stop_callback = EarlyStopping(monitor='accuracy', min_delta=0.0001, patience=11, verbose=1, mode='auto')
 
-        np.random.seed(3) # fix randomness
         self.model.fit(batch_generator(generator),
                                  steps_per_epoch=steps_per_epoch,
                                  epochs=epochs,
@@ -204,7 +203,7 @@ class ResnetModel(ModelBase):
         #epochs = 2
         # This callback reduces the learning rate when the training accuracy does not improve any more
         lr_callback = ReduceLROnPlateau(monitor='accuracy', factor=0.5, patience=5,
-                                    verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
+                                    verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0)
 
         # Stops the training process upon convergence
         stop_callback = EarlyStopping(monitor='accuracy', min_delta=0.0005, patience=3, verbose=1, mode='auto')

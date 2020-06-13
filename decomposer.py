@@ -50,7 +50,7 @@ class Decomposer(ModelBase):
         def bootstrap(Y, X):
             window_size = self.window_size
             focus_size = self.focus_size
-
+            print('in decomposer bootstrap code')
             while 1:
                 img_id = np.random.choice(X.shape[0])
                 img_size = X[img_id].shape
@@ -69,7 +69,7 @@ class Decomposer(ModelBase):
                     window_center[1] - focus_size // 2 : window_center[1] + focus_size // 2
                 ])
 
-                Y_sample = 1 * (Y_sample > 0.21)
+                Y_sample = 1 * (Y_sample > 0.25)
                 # 0.79 is the accuracy of the zero classifier on the data we have
 
                 # data augmentation: random flip and rotation (in steps of 90°)
@@ -82,7 +82,8 @@ class Decomposer(ModelBase):
 
                 yield Y_sample, X_sample
 
-        self.train_online(bootstrap(Y_pad, X_pad))
+        #self.train_online(bootstrap(Y_pad, X_pad))
+        self.model.train(Y,X)
 
     def train_online(self, generator):
         self.model.train_online(generator)
@@ -124,6 +125,7 @@ class Decomposer(ModelBase):
         Y_pred = self.model.classify(X_windows)
 
         return self.recompose(Y_pred, num_of_img, img_size)
+        #return Y_pred
 
     def summary(self):
         self.model.summary()

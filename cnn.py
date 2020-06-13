@@ -67,7 +67,6 @@ class CNNModel(ModelBase):
             EarlyStopping(monitor='loss', patience=2, verbose=1, mode='auto')
         ]
 
-        np.random.seed(3) # fix randomness
         self.model.fit_generator(batch_generator(generator),
                                  steps_per_epoch=steps_per_epoch,
                                  epochs=epochs,
