@@ -32,7 +32,7 @@ class ClassVoting(ModelBase):
     def train_online(self, generator):
         for i in range(len(self.voters)):
             print('Training voter #' + str(i+1) + '...')
-            self.voters[i].train(generator)
+            self.voters[i].train_online(generator)
 
     def classify(self, X):
         num_voters = self.num_voters
