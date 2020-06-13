@@ -70,7 +70,7 @@ class Decomposer(ModelBase):
                 ])
 
                 Y_sample = 1 * (Y_sample > 0.25)
-                # 0.79 is the accuracy of the zero classifier on the data we have
+                # ~0.75 is the accuracy of the random classifier on the data we have
 
                 # data augmentation: random flip and rotation (in steps of 90°)
                 # TODO: arbitrary rotation
@@ -82,8 +82,7 @@ class Decomposer(ModelBase):
 
                 yield Y_sample, X_sample
 
-        #self.train_online(bootstrap(Y_pad, X_pad))
-        self.model.train(Y,X)
+        self.train_online(bootstrap(Y_pad, X_pad))
 
     def train_online(self, generator):
         self.model.train_online(generator)
