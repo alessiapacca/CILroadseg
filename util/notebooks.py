@@ -28,10 +28,11 @@ def nb_load_data(train_dir, train_gt_dir, test_dir):
     X_test = []
 
     print("Loading training input...")
-    files = os.listdir(train_dir)
+    files = sorted(os.listdir(train_dir))
     numfiles = len(files)
     k = 0
     for file in files:
+        # print(file)
         X.append(np.asarray(load_image((train_dir + file))))
         k += 1
 
@@ -41,10 +42,11 @@ def nb_load_data(train_dir, train_gt_dir, test_dir):
     X = np.array(X)
 
     print("Loading training groundtruth...")
-    files = os.listdir(train_gt_dir)
+    files = sorted(os.listdir(train_gt_dir))
     numfiles = len(files)
     k = 0
     for file in files:
+        # print(file)
         Y.append(np.asarray(load_image((train_gt_dir + file))))
         k += 1
 
@@ -54,7 +56,7 @@ def nb_load_data(train_dir, train_gt_dir, test_dir):
     Y = (np.array(Y) >= 0.25) * 1  # compensates for lossy image data
 
     print("Loading test input...")
-    files = os.listdir(test_dir)
+    files = sorted(os.listdir(test_dir))
     numfiles = len(files)
     k = 0
     for file in files:
