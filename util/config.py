@@ -6,7 +6,7 @@ from sklearn.metrics import f1_score
 # seed used for pseudo-random number generators
 RND_SEED = 1
 patch_size = 16
-batch_size = 250
+batch_size = 125
 steps_per_epoch = 200
 epochs = 20
 window_size = 72
@@ -26,4 +26,4 @@ def mean_f_score(Y, Y_star):
     Y = Y.reshape(-1)           # vectorize
     Y_star = Y_star.reshape(-1) # vectorize
 
-    return f1_score(Y_star, Y, average='samples')
+    return f1_score(Y_star, Y)
