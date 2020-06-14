@@ -22,13 +22,14 @@ def validate_fold(model, fold, non_fold, X, Y):
 
     Z = model.classify(X_te)
 
-    #Y_te = np.mean(create_patches_gt(Y_te, 16, 16), axis=(1, 2)) > 0.25
-    
+    img_patches_gt = create_patches_gt(Y_te, 16, 16)
+    y_real = np.mean(img_patches_gt, axis=(1, 2)) > 0.25
+    '''
     if Z.shape != Y_te.shape:
         raise ValueError('The model returned data with different shape: (' + str(Z.shape) + ' vs ' + str(Y_te.shape) + ')')
-    
+    '''
     # NOTE: this assumes all the data to be already vectorized and with values in {0, 1}.
-    return accuracy(Z, Y_te), mean_f_score(Z, Y_te)
+    return accuracy(Z, y_real), mean_f_score(Z, y_real)
 
 
 #
