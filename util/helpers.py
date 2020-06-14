@@ -207,34 +207,3 @@ def get_classification_results(y, y_test):
     diff = y - y_test
     correct = np.sum(diff == 0)
     return correct / y_test.size
-
-
-# assumes one classification per patch
-def recompose(Y, num_of_img, img_size, patch_size):
-    Y = Y.reshape((num_of_img, math.ceil(img_size[0] / patch_size), math.ceil(img_size[1] / patch_size)))
-    Y = np.transpose(Y, axes=[0, 2, 1])
-
-    Y = np.repeat(Y, patch_size, axis=1)
-    Y = np.repeat(Y, patch_size, axis=2)
-
-    return Y[:, 0:img_size[0], 0:img_size[1]]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

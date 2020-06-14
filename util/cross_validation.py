@@ -21,6 +21,8 @@ def validate_fold(model, fold, non_fold, X, Y):
     model.train(Y_tr, X_tr)
 
     Z = model.classify(X_te)
+
+    #Y_te = np.mean(create_patches_gt(Y_te, 16, 16), axis=(1, 2)) > 0.25
     
     if Z.shape != Y_te.shape:
         raise ValueError('The model returned data with different shape: (' + str(Z.shape) + ' vs ' + str(Y_te.shape) + ')')

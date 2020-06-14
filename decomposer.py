@@ -50,7 +50,7 @@ class Decomposer(ModelBase):
         def bootstrap(Y, X):
             window_size = self.window_size
             focus_size = self.focus_size
-            print('in decomposer bootstrap code')
+
             while 1:
                 img_id = np.random.choice(X.shape[0])
                 img_size = X[img_id].shape
@@ -109,7 +109,6 @@ class Decomposer(ModelBase):
         focus_size = self.focus_size
 
         Y = Y.reshape((num_of_img, math.ceil(img_size[0] / focus_size), math.ceil(img_size[1] / focus_size)))
-        Y = np.transpose(Y, axes=[0, 2, 1])
 
         Y = np.repeat(Y, focus_size, axis=1)
         Y = np.repeat(Y, focus_size, axis=2)
@@ -124,7 +123,6 @@ class Decomposer(ModelBase):
         Y_pred = self.model.classify(X_windows)
 
         return self.recompose(Y_pred, num_of_img, img_size)
-        #return Y_pred
 
     def summary(self):
         self.model.summary()
