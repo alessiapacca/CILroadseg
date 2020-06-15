@@ -27,11 +27,12 @@ class Decomposer(ModelBase):
     # focus_size - size of the focus of a window (i.e. the part in the center of the window that will be classified
     #              by looking at the whole window)
     #
-    def __init__(self, model, focus_size = 16, window_size = 72):
+    def __init__(self, model, focus_size = 16, window_size = 72, do_recompose = False):
         self.model = model # (window) -> (patch)
 
         self.focus_size = focus_size
         self.window_size = window_size
+        self.do_recompose = do_recompose
 
     def initialize(self):
         self.model.initialize()
@@ -122,7 +123,10 @@ class Decomposer(ModelBase):
         X_windows = self.create_windows(X)
         Y_pred = self.model.classify(X_windows)
 
-        return self.recompose(Y_pred, num_of_img, img_size)
+        if self.do_recompose:
+            Y_pred = self.recompose(Y_pred, num_of_img, img_size)
+
+        return Y_pred
 
     def summary(self):
         self.model.summary()
