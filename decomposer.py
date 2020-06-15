@@ -1,7 +1,7 @@
 
 import math
-import numpy as np
 
+from util.config import *
 from util.helpers import img_crop
 from util.model_base import ModelBase
 
@@ -27,7 +27,7 @@ class Decomposer(ModelBase):
     # focus_size - size of the focus of a window (i.e. the part in the center of the window that will be classified
     #              by looking at the whole window)
     #
-    def __init__(self, model, focus_size = 16, window_size = 72, do_recompose = False):
+    def __init__(self, model, do_recompose = False):
         self.model = model # (window) -> (patch)
 
         self.focus_size = focus_size

@@ -21,7 +21,7 @@ def batch_generator(bootstrap):
 
 class ResnetModel(ModelBase):
 
-    def __init__(self, window_size = 72):
+    def __init__(self):
         self.window_size = window_size
         self.model = None
 
@@ -54,7 +54,6 @@ class ResnetModel(ModelBase):
         self.model = model
 
     def load(self, filename):
-        self.initialize()
         self.model.load_weights(filename)
 
     def save(self, filename):

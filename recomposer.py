@@ -1,8 +1,7 @@
 
 import math
-import numpy as np
 
-from util.helpers import img_crop
+from util.config import *
 from util.model_base import ModelBase
 
 
@@ -17,7 +16,7 @@ class Recomposer(ModelBase):
     # focus_size - size of the focus of a window (i.e. the part in the center of the window that will be classified
     #              by looking at the whole window)
     #
-    def __init__(self, model, focus_size = 16):
+    def __init__(self, model):
         self.model = model
 
         self.focus_size = focus_size

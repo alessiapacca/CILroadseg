@@ -5,11 +5,13 @@ from sklearn.metrics import f1_score
 
 # seed used for pseudo-random number generators
 RND_SEED = 1
-patch_size = 16
+
+focus_size = 16
+window_size = 100
+
 batch_size = 250
 steps_per_epoch = 200
-epochs = 20
-window_size = 72
+epochs = 100
 
 
 # shape of output: (number of images, width, height)
