@@ -29,7 +29,6 @@ class ResnetModel(ModelBase):
         input_shape = (self.window_size, self.window_size, 3)
 
         restnet = ResNet50(weights = "imagenet", include_top = False, input_shape = input_shape)
-        print('Resnet retrieved successfully.')
 
         output = restnet.layers[-1].output
         output = Flatten()(output)
@@ -55,6 +54,7 @@ class ResnetModel(ModelBase):
         self.model = model
 
     def load(self, filename):
+        self.initialize()
         self.model.load_weights(filename)
 
     def save(self, filename):

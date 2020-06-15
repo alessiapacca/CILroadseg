@@ -98,12 +98,9 @@ def nb_predict_masks(model, test_dir, test_masks_dir):
         img_id = int(re.search(r"\d+", file).group(0))
 
         X_test = np.array([np.asarray(load_image((test_dir + file)))])
-        num_of_img = X_test.shape[0]
-        img_size = (X_test.shape[1], X_test.shape[2])
         Zi = model.classify(X_test)
-        Y_pred = recompose(Zi, num_of_img, img_size,16)
 
-        save_image(np.repeat(Y_pred[0][:, :, np.newaxis], 3, axis=2), test_masks_dir + "mask_" + str(img_id) + ".png")
+        save_image(np.repeat(Zi[0][:, :, np.newaxis], 3, axis=2), test_masks_dir + "mask_" + str(img_id) + ".png")
 
         k += 1
         sys.stdout.write("\rProgress: " + str(k * 100 // numfiles) + "%")

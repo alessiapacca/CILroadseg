@@ -42,6 +42,7 @@ class Recomposer(ModelBase):
         focus_size = self.focus_size
 
         Y = Y.reshape((num_of_img, math.ceil(img_size[0] / focus_size), math.ceil(img_size[1] / focus_size)))
+        Y = np.transpose(Y, axes=[0, 2, 1])
 
         Y = np.repeat(Y, focus_size, axis=1)
         Y = np.repeat(Y, focus_size, axis=2)
