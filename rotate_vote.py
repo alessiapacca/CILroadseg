@@ -31,7 +31,9 @@ class RotAndVote(ModelBase):
         Y_pred = np.empty((4, num_samples), dtype=int)
 
         for i in range(4):
-            Y_pred[i] = model.classify(np.rot90(X, i, axes=(1, 2)))
+            X_rot = np.rot90(X, i, axes=(1, 2))
+
+            Y_pred[i] = model.classify(X_rot)
 
         Y_pred = Y_pred.T
         return np.array([np.bincount(Y_pred[i]).argmax() for i in range(num_samples)])

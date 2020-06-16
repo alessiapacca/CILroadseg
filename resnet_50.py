@@ -79,6 +79,5 @@ class ResnetModel(ModelBase):
 
     def classify(self, X):
         Z = self.model.predict(X)
-        Z = (Z > 0.5).astype(int)
 
-        return Z
+        return (Z > 0.5).astype(int).ravel()
