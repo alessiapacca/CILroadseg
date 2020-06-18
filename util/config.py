@@ -10,6 +10,7 @@ focus_size = 16
 window_size = 100
 
 batch_size = 250
+val_batch_size = 1000
 steps_per_epoch = 200
 epochs = 100
 

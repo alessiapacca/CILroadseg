@@ -8,13 +8,26 @@ from tensorflow.keras import optimizers
 from decomposer import *
 from util.config import *
 
+
 def batch_generator(bootstrap):
     while 1:
         # create one batch
         X_batch = np.empty((batch_size, window_size, window_size, 3))
         Y_batch = np.empty(batch_size)
-         
+
         for i in range(batch_size):
+            Y_batch[i], X_batch[i] = next(bootstrap)
+
+        yield (X_batch, Y_batch)
+
+
+def val_batch_generator(bootstrap):
+    while 1:
+        # create one batch
+        X_batch = np.empty((val_batch_size, window_size, window_size, 3))
+        Y_batch = np.empty(val_batch_size)
+
+        for i in range(val_batch_size):
             Y_batch[i], X_batch[i] = next(bootstrap)
 
         yield (X_batch, Y_batch)
@@ -45,7 +58,7 @@ class ResnetModel(ModelBase):
         
         model = Sequential()
         model.add(restnet)
-        model.add(Dense(64, activation='relu', input_dim=input_shape))
+        model.add(Dense(64, activation='relu'))
         model.add(Dropout(rate = 0.3))
         model.add(Dense(64, activation='relu'))
         model.add(Dropout(rate = 0.3))
@@ -66,16 +79,19 @@ class ResnetModel(ModelBase):
         self.model.compile(optimizer=optimizers.RMSprop(lr=2e-5), loss='binary_crossentropy', metrics=['accuracy'])
 
         callbacks = [
-            ReduceLROnPlateau(monitor='accuracy', factor=0.5, patience=5,
-                              verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0),
-            EarlyStopping(monitor='accuracy', min_delta=0.0005, patience=3, verbose=1, mode='auto')
+            ReduceLROnPlateau(monitor='accuracy', factor=0.5, patience=3,
+                              verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0),
+            EarlyStopping(monitor='accuracy', min_delta=0.0001, patience=5, verbose=1, mode='auto')
         ]
+
+        X_val, Y_val = next(val_batch_generator(generator))
 
         self.model.fit(batch_generator(generator),
                                  steps_per_epoch=steps_per_epoch,
                                  epochs=epochs,
                                  verbose=1,
-                                 callbacks=callbacks)
+                                 callbacks=callbacks,
+                                 validation_data=(X_val, Y_val))
 
     def classify(self, X):
         Z = self.model.predict(X)
