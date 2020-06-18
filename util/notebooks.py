@@ -54,7 +54,8 @@ def nb_load_data(train_dir, train_gt_dir, test_dir):
         sys.stdout.write("\rProgress: " + str(k * 100 // numfiles) + "%")
 
     print("\rProgress: done (" + str(len(Y)) + " images).")
-    Y = (np.array(Y) >= 0.25) * 1  # compensates for lossy image data
+    Y = np.array(Y)
+    #Y = (Y >= 0.25) * 1  # compensates for lossy image data
 
     print("Loading test input...")
     files = sorted(os.listdir(test_dir))
