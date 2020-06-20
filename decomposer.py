@@ -37,6 +37,39 @@ class Decomposer(ModelBase):
     def initialize(self):
         self.model.initialize()
 
+    def sample_window(self, Y, X):
+        window_size = self.window_size
+        focus_size = self.focus_size
+
+        img_size = X.shape
+
+        # window has to fit in the image
+        window_center = (np.random.randint(window_size // 2, img_size[0] - window_size // 2),
+                         np.random.randint(window_size // 2, img_size[1] - window_size // 2))
+
+        X_sample = X[
+                   window_center[0] - window_size // 2: window_center[0] + window_size // 2,
+                   window_center[1] - window_size // 2: window_center[1] + window_size // 2
+                   ]
+
+        Y_sample = np.mean(Y[
+                           window_center[0] - focus_size // 2: window_center[0] + focus_size // 2,
+                           window_center[1] - focus_size // 2: window_center[1] + focus_size // 2
+                           ])
+
+        Y_sample = 1 * (Y_sample > 0.25)
+        # ~0.75 is the accuracy of the random classifier on the data we have
+
+        # data augmentation: random flip and rotation (in steps of 90°)
+        # TODO: arbitrary rotation
+        flip = np.random.choice(2)
+        rot_step = np.random.choice(4)
+
+        if flip: X_sample = np.fliplr(X_sample)
+        X_sample = np.rot90(X_sample, rot_step)
+
+        return Y_sample, X_sample
+
     def train(self, Y, X):
 
         padding = (self.window_size - self.focus_size) // 2
@@ -49,39 +82,16 @@ class Decomposer(ModelBase):
             Y_pad[i] = pad_gt(Y[i], padding)
 
         def bootstrap(Y, X):
-            window_size = self.window_size
-            focus_size = self.focus_size
+            # extract for validation batch
+            # always extract val_batch_size samples from this generator to use as validation set
+            val_batch_pool_size = 10
+            for i in range(val_batch_size):
+                img_id = np.random.choice(val_batch_pool_size)
+                yield self.sample_window(Y[img_id], X[img_id])
 
             while 1:
-                img_id = np.random.choice(X.shape[0])
-                img_size = X[img_id].shape
-
-                # window has to fit in the image
-                window_center = (np.random.randint(window_size // 2, img_size[0] - window_size // 2),
-                                 np.random.randint(window_size // 2, img_size[1] - window_size // 2))
-
-                X_sample = X[img_id][
-                    window_center[0] - window_size // 2 : window_center[0] + window_size // 2,
-                    window_center[1] - window_size // 2 : window_center[1] + window_size // 2
-                ]
-
-                Y_sample = np.mean(Y[img_id][
-                    window_center[0] - focus_size // 2 : window_center[0] + focus_size // 2,
-                    window_center[1] - focus_size // 2 : window_center[1] + focus_size // 2
-                ])
-
-                Y_sample = 1 * (Y_sample > 0.25)
-                # ~0.75 is the accuracy of the random classifier on the data we have
-
-                # data augmentation: random flip and rotation (in steps of 90°)
-                # TODO: arbitrary rotation
-                flip = np.random.choice(2)
-                rot_step = np.random.choice(4)
-
-                if flip: X_sample = np.fliplr(X_sample)
-                X_sample = np.rot90(X_sample, rot_step)
-
-                yield Y_sample, X_sample
+                img_id = np.random.choice(X.shape[0] - val_batch_pool_size) + val_batch_pool_size
+                yield self.sample_window(Y[img_id], X[img_id])
 
         self.train_online(bootstrap(Y_pad, X_pad))
 
