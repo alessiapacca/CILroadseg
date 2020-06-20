@@ -7,6 +7,7 @@ from tensorflow.keras.callbacks import EarlyStopping,ReduceLROnPlateau
 from tensorflow.keras import optimizers
 from decomposer import *
 from util.config import *
+from util.visualize import plot_history
 
 
 def batch_generator(bootstrap):
@@ -55,13 +56,16 @@ class ResnetModel(ModelBase):
 
         for layer in restnet.layers[0:]:
             layer.trainable = True
-        
+
+        print('m')
         model = Sequential()
         model.add(restnet)
         model.add(Dense(64, activation='relu'))
-        model.add(Dropout(rate = 0.3))
+        model.add(Dropout(rate = 0.5))
         model.add(Dense(64, activation='relu'))
-        model.add(Dropout(rate = 0.3))
+        model.add(Dropout(rate = 0.5))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dropout(rate = 0.5))
         model.add(Dense(1, activation='sigmoid'))
 
         self.model = model
@@ -76,22 +80,25 @@ class ResnetModel(ModelBase):
         # this generator does the bootstrap of a single sample.
         # batch_generator will create batches of these samples
 
-        self.model.compile(optimizer=optimizers.RMSprop(lr=2e-5), loss='binary_crossentropy', metrics=['accuracy'])
+        self.model.compile(optimizer=optimizers.RMSprop(lr=2e-4), loss='binary_crossentropy', metrics=['accuracy'])
 
         callbacks = [
-            ReduceLROnPlateau(monitor='accuracy', factor=0.5, patience=3,
-                              verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0),
-            EarlyStopping(monitor='accuracy', min_delta=0.0001, patience=5, verbose=1, mode='auto')
+            ReduceLROnPlateau(monitor='val_accuracy', min_delta=0.0001, patience=3,
+                              verbose=1, mode='auto', factor=0.5, cooldown=0, min_lr=0),
+            #EarlyStopping(monitor='val_accuracy', min_delta=0.0005, patience=5,
+            #              verbose=1, mode='auto')
         ]
 
         X_val, Y_val = next(val_batch_generator(generator))
 
-        self.model.fit(batch_generator(generator),
+        history = self.model.fit(batch_generator(generator),
                                  steps_per_epoch=steps_per_epoch,
                                  epochs=epochs,
                                  verbose=1,
                                  callbacks=callbacks,
                                  validation_data=(X_val, Y_val))
+
+        plot_history(history)
 
     def classify(self, X):
         Z = self.model.predict(X)
