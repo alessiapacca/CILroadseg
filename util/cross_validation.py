@@ -38,8 +38,6 @@ def validate_fold(model, fold, non_fold, X, Y):
 # X, Y - numpy array containing training data (input, labels)
 #
 def cross_validate(model, K, X, Y):
-    #np.random.seed(RND_SEED) # fix randomness
-
     perm = np.random.permutation(Y.shape[0]) # randomize folds
     # Y.shape[0] is the number of samples
 

@@ -71,7 +71,6 @@ class Decomposer(ModelBase):
         return Y_sample, X_sample
 
     def train(self, Y, X):
-
         padding = (self.window_size - self.focus_size) // 2
 
         X_pad = np.empty((X.shape[0], X.shape[1] + 2*padding, X.shape[2] + 2*padding, X.shape[3]))
@@ -82,16 +81,17 @@ class Decomposer(ModelBase):
             Y_pad[i] = pad_gt(Y[i], padding)
 
         def bootstrap(Y, X):
+            perm = np.random.permutation(Y.shape[0])
+
             # extract for validation batch
             # always extract val_batch_size samples from this generator to use as validation set
-            val_batch_pool_size = 10
             for i in range(val_batch_size):
                 img_id = np.random.choice(val_batch_pool_size)
-                yield self.sample_window(Y[img_id], X[img_id])
+                yield self.sample_window(Y[perm[img_id]], X[perm[img_id]])
 
             while 1:
                 img_id = np.random.choice(X.shape[0] - val_batch_pool_size) + val_batch_pool_size
-                yield self.sample_window(Y[img_id], X[img_id])
+                yield self.sample_window(Y[perm[img_id]], X[perm[img_id]])
 
         self.train_online(bootstrap(Y_pad, X_pad))
 

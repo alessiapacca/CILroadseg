@@ -7,11 +7,13 @@ from sklearn.metrics import f1_score
 RND_SEED = 1
 
 focus_size = 16
-window_size = 64
+window_size = 100
 
-batch_size = 100
+batch_size = 150
 val_batch_size = 1000
-steps_per_epoch = 5000
+val_batch_pool_size = 10
+
+steps_per_epoch = 2000
 epochs = 100
 
 
