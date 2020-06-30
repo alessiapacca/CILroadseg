@@ -21,7 +21,7 @@ class RotAndVote(ModelBase):
     def train(self, Y, X):
         self.model.train(Y, X)
 
-    def train_online(self, generator):
+    def train_online(self, generator, val_generator = None):
         self.model.train_online(generator)
 
     def classify(self, X):

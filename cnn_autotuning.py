@@ -147,7 +147,7 @@ class CNNModel(ModelBase):
     def save(self, filename):
         self.model.save(filename)
 
-    def train_online(self, generator):
+    def train_online(self, generator, val_generator = None):
 
 
         #if self.model is not assigned then we tune parameters. This is done for the cross validation folds

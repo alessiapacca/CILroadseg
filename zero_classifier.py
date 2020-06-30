@@ -14,7 +14,7 @@ class ZeroClassifier(ModelBase):
     def train(self, Y, X):
         pass
 
-    def train_online(self, generator):
+    def train_online(self, generator, val_generator = None):
         pass
 
     def classify(self, X):

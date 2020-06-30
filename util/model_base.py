@@ -16,8 +16,9 @@ class ModelBase:
 
     #
     # Trains the model with a generator that yields the data.
+    # The caller should also provide an independent generator that can be used for validation.
     #
-    def train_online(self, generator):
+    def train_online(self, generator, val_generator = None):
         raise NotImplementedError('This model does not support online training. Use train() instead')
 
     #

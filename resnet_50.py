@@ -76,7 +76,7 @@ class ResnetModel(ModelBase):
     def save(self, filename):
         self.model.save_weights(filename)
 
-    def train_online(self, generator):
+    def train_online(self, generator, val_generator = None):
         # this generator does the bootstrap of a single sample.
         # batch_generator will create batches of these samples
 

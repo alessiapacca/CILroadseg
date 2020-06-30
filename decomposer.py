@@ -81,22 +81,27 @@ class Decomposer(ModelBase):
             Y_pad[i] = pad_gt(Y[i], padding)
 
         def bootstrap(Y, X):
-            perm = np.random.permutation(Y.shape[0])
+            if val_batch_pool_size > 0:
+                perm = np.random.permutation(Y.shape[0])
 
-            # extract for validation batch
-            # always extract val_batch_size samples from this generator to use as validation set
-            for i in range(val_batch_size):
-                img_id = np.random.choice(val_batch_pool_size)
-                yield self.sample_window(Y[perm[img_id]], X[perm[img_id]])
+                # extract for validation batch
+                # always extract val_batch_size samples from this generator to use as validation set
+                for _ in range(val_batch_size):
+                    img_id = np.random.choice(val_batch_pool_size)
+                    yield self.sample_window(Y[perm[img_id]], X[perm[img_id]])
 
-            while 1:
-                img_id = np.random.choice(X.shape[0] - val_batch_pool_size) + val_batch_pool_size
-                yield self.sample_window(Y[perm[img_id]], X[perm[img_id]])
+                while 1:
+                    img_id = np.random.choice(X.shape[0] - val_batch_pool_size) + val_batch_pool_size
+                    yield self.sample_window(Y[perm[img_id]], X[perm[img_id]])
+            else:
+                while 1:
+                    img_id = np.random.choice(X.shape[0])
+                    yield self.sample_window(Y[img_id], X[img_id]) # more efficient
 
-        self.train_online(bootstrap(Y_pad, X_pad))
+        self.train_online(bootstrap(Y_pad, X_pad), bootstrap(Y_pad, X_pad))
 
-    def train_online(self, generator):
-        self.model.train_online(generator)
+    def train_online(self, generator, val_generator = None):
+        self.model.train_online(generator, val_generator)
 
     #
     # Divides the given images into focus_size x focus_size squares, in order to classify them.
