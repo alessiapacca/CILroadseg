@@ -28,15 +28,17 @@ class RotAndVote(ModelBase):
         model = self.model
         num_samples = X.shape[0]
 
-        Y_pred = np.empty((4, num_samples), dtype=int)
+        X_rots = np.empty((4*num_samples, X.shape[1], X.shape[2], X.shape[3]))
 
-        for i in range(4):
-            X_rot = np.rot90(X, i, axes=(1, 2))
+        X_rots[0:num_samples] = X
+        for i in range(3):
+            X_rots[i*num_samples:(i+1)*num_samples] = np.rot90(X, i+1, axes=(1, 2))
 
-            Y_pred[i] = model.classify(X_rot)
+        Y_pred = model.classify(X_rots)
+        Y_pred = Y_pred.reshape((4, num_samples))
 
         Y_pred = Y_pred.T
-        return np.array([np.bincount(Y_pred[i]).argmax() for i in range(num_samples)])
+        return np.array([1 - np.bincount(1 - Y_pred[i]).argmax() for i in range(num_samples)])
 
     def save(self, filename):
         self.model.save(filename)
