@@ -1,8 +1,12 @@
 
+import tensorflow as tf
+
 from keras import Sequential, Input, Model
 from keras.callbacks import ReduceLROnPlateau, EarlyStopping
-from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, LeakyReLU, BatchNormalization, UpSampling2D, Add
+from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, LeakyReLU, BatchNormalization, UpSampling2D, \
+    Add, Concatenate
 from keras.optimizers import Adam
+from keras.regularizers import l2
 
 from decomposer import *
 from util.config import *
@@ -30,21 +34,25 @@ class ConvNetModel(ModelBase):
     def initialize(self):
         input_s = (self.window_size, self.window_size, 3)
 
-        print('r')
+        print('u')
 
         input_layer = Input(shape=input_s)
 
         cleaner_layers = [
             Conv2D(filters=64, kernel_size=5, padding='same'),
-            MaxPooling2D(pool_size=2, padding='same'),
-            BatchNormalization(),
-            Dropout(0.3),
             LeakyReLU(alpha=0.1),
 
-            UpSampling2D(size=2, interpolation='nearest'),
-            Conv2D(filters=3, kernel_size=5, padding='same'),
+            Conv2D(filters=32, kernel_size=5, padding='same'),
+            LeakyReLU(alpha=0.1),
             Dropout(0.3),
-            LeakyReLU(alpha=0.1)
+
+            MaxPooling2D(pool_size=2, padding='same'),
+            Dropout(0.3),
+
+            UpSampling2D(size=2, interpolation='nearest'),
+            Conv2D(filters=3, kernel_size=3, padding='same'),
+            LeakyReLU(alpha=0.1),
+            Dropout(0.3)
         ]
 
         cleaner = Sequential(cleaner_layers)(input_layer)
@@ -54,48 +62,43 @@ class ConvNetModel(ModelBase):
         layers = [
             # First convolution
             Conv2D(filters=64, kernel_size=5, padding='same'),
-            #BatchNormalization(),
-            MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.3),
             LeakyReLU(alpha=0.1),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Dropout(0.25),
 
             # Second convolution
             Conv2D(filters=96, kernel_size=5, padding='same'),
-            #BatchNormalization(),
-            MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.3),
             LeakyReLU(alpha=0.1),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Dropout(0.25),
 
             # Third convolution
             Conv2D(filters=128, kernel_size=3, padding='same'),
-            #BatchNormalization(),
-            MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.3),
             LeakyReLU(alpha=0.1),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Dropout(0.25),
 
             # Fourth convolution
             Conv2D(filters=256, kernel_size=3, padding='same'),
-            #BatchNormalization(),
-            MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.3),
             LeakyReLU(alpha=0.1),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Dropout(0.25),
 
             # Fifth convolution
             Conv2D(filters=256, kernel_size=3, padding='same'),
-            #BatchNormalization(),
-            MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.3),
             LeakyReLU(alpha=0.1),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Dropout(0.25),
 
             # Classification layer
             Flatten(),
-            Dense(64),#, kernel_regularizer=l2(1e-6)),
-            Dropout(0.4),
+            Dense(64, kernel_regularizer=l2(1e-6)),
             LeakyReLU(alpha=0.1),
+            Dropout(0.4),
 
-            Dense(64),#, kernel_regularizer=l2(1e-6)),
-            Dropout(0.4),
+            Dense(64, kernel_regularizer=l2(1e-6)),
             LeakyReLU(alpha=0.1),
+            Dropout(0.5),
 
             # Output
             Dense(1, activation='sigmoid')
@@ -127,6 +130,8 @@ class ConvNetModel(ModelBase):
             EarlyStopping(monitor='accuracy', min_delta=0.0001, patience=11, verbose=1)
         ]
 
+        tf.random.set_seed(3)
+
         history = self.model.fit_generator(
                         batch_generator(generator),
                         steps_per_epoch=steps_per_epoch,
@@ -141,6 +146,4 @@ class ConvNetModel(ModelBase):
             plot_history(history)
 
     def classify(self, X):
-        Z = self.model.predict(X)
-
-        return (Z > 0.5).astype(int).ravel()
+        return self.model.predict(X).ravel()

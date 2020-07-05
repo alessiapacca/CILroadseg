@@ -11,9 +11,11 @@ class RotAndVote(ModelBase):
 
     #
     # model - model used for classification
+    # method - 'maj' (Majority) or 'avg' (1 iff average >= 0.5)
     #
-    def __init__(self, model):
+    def __init__(self, model, method = 'maj'):
         self.model = model
+        self.method = method
 
     def initialize(self):
         self.model.initialize()
@@ -38,7 +40,12 @@ class RotAndVote(ModelBase):
         Y_pred = Y_pred.reshape((4, num_samples))
 
         Y_pred = Y_pred.T
-        return np.array([1 - np.bincount(1 - Y_pred[i]).argmax() for i in range(num_samples)])
+        if self.method == 'avg':
+            Y_pred = np.mean(Y_pred, axis=1)
+            Y_pred = (Y_pred >= 0.5) * 1
+            return Y_pred
+        else:
+            return np.array([1 - np.bincount(1 - Y_pred[i]).argmax() for i in range(num_samples)])
 
     def save(self, filename):
         self.model.save(filename)
