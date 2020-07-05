@@ -48,8 +48,11 @@ def cross_validate(model, K, X, Y):
     fscore_v = np.empty(K)
 
     for i in range(K):
-        fold_indices = perm[i * fold_size : (i + 1) * fold_size]
-        non_fold_indices = perm[np.arange(perm.shape[0]) != i].ravel()
+        fold_indices = perm[i * fold_size: (i + 1) * fold_size]
+        non_fold_indices = np.concatenate([
+            perm[0: i * fold_size],
+            perm[(i + 1) * fold_size: perm.shape[0]]
+        ])
 
         accuracy_v[i], fscore_v[i] = validate_fold(model, fold_indices, non_fold_indices, X, Y)
         print("Fold #" + str(i+1) + ": ")
