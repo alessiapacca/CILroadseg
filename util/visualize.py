@@ -26,24 +26,34 @@ def view_image_mask2(x, y, y_true):
     plt.figure()
     plt.imshow(Image.fromarray(np.uint8(y_true * 255), 'L'))
 
-def view_image_array(X, Y1, Y2=None):
-    print('Image | Mask | Mask (with Rot And Vote)')
+
+def view_image_array(X, Y1, Y2=None, Y3=None):
+    print('Image | Mask | RotAndVote | RotAndMean')
 
     cols = 2
     if Y2 is not None:
-        cols = 3
+        cols += 1
+
+    if Y3 is not None:
+        cols += 1
 
     fig = plt.figure(figsize=(30, 100))
     for i in range(X.shape[0]):
-        fig.add_subplot(X.shape[0], cols, cols*i + 1)
+        fig.add_subplot(X.shape[0], cols, cols * i + 1)
         plt.imshow(X[i])
 
-        fig.add_subplot(X.shape[0], cols, cols*i + 2)
+        fig.add_subplot(X.shape[0], cols, cols * i + 2)
         plt.imshow(Y1[i])
 
-        if cols > 2:
-            fig.add_subplot(X.shape[0], cols, cols*i + 3)
+        next_col = 3
+        if Y2 is not None:
+            fig.add_subplot(X.shape[0], cols, cols * i + next_col)
             plt.imshow(Y2[i])
+            next_col += 1
+
+        if Y3 is not None:
+            fig.add_subplot(X.shape[0], cols, cols * i + next_col)
+            plt.imshow(Y3[i])
 
     plt.show()
 
