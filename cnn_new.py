@@ -4,13 +4,15 @@ import tensorflow as tf
 from keras import Sequential, Input, Model
 from keras.callbacks import ReduceLROnPlateau, EarlyStopping
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, LeakyReLU, BatchNormalization, UpSampling2D, \
-    Add, Concatenate
+    Add, Concatenate, ReLU, Conv2DTranspose, concatenate
 from keras.optimizers import Adam
 from keras.regularizers import l2
 
 from decomposer import *
 from util.config import *
 from util.visualize import plot_history
+
+
 
 
 def batch_generator(bootstrap):
@@ -24,6 +26,12 @@ def batch_generator(bootstrap):
 
         yield (X_batch, Y_batch)
 
+def conv_block(filters, dropout=0.5):
+    return Sequential([
+        Conv2D(filters=filters, kernel_size=3, padding='same', kernel_initializer='he_normal'),
+        LeakyReLU(alpha=0.1),
+        Dropout(dropout)
+    ])
 
 class ConvNetModel(ModelBase):
 
@@ -34,79 +42,46 @@ class ConvNetModel(ModelBase):
     def initialize(self):
         input_s = (self.window_size, self.window_size, 3)
 
-        print('u')
+        print('a')
 
         input_layer = Input(shape=input_s)
 
-        cleaner_layers = [
-            Conv2D(filters=64, kernel_size=5, padding='same'),
-            LeakyReLU(alpha=0.1),
-
-            Conv2D(filters=32, kernel_size=5, padding='same'),
-            LeakyReLU(alpha=0.1),
-            Dropout(0.3),
-
+        classifier = Sequential([
+            Conv2D(filters=16, kernel_size=3, padding='same'),
+            #BatchNormalization(),
+            ReLU(),
+            Dropout(0.5),
             MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.3),
 
-            UpSampling2D(size=2, interpolation='nearest'),
-            Conv2D(filters=3, kernel_size=3, padding='same'),
-            LeakyReLU(alpha=0.1),
-            Dropout(0.3)
-        ]
-
-        cleaner = Sequential(cleaner_layers)(input_layer)
-
-        cleaned_image = Add()([input_layer, cleaner])
-
-        layers = [
-            # First convolution
-            Conv2D(filters=64, kernel_size=5, padding='same'),
-            LeakyReLU(alpha=0.1),
+            Conv2D(filters=32, kernel_size=3, padding='same'),
+            #BatchNormalization(),
+            ReLU(),
+            Dropout(0.5),
             MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.25),
 
-            # Second convolution
-            Conv2D(filters=96, kernel_size=5, padding='same'),
-            LeakyReLU(alpha=0.1),
+            Conv2D(filters=64, kernel_size=3, padding='same'),
+            #BatchNormalization(),
+            ReLU(),
+            Dropout(0.5),
             MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.25),
 
-            # Third convolution
             Conv2D(filters=128, kernel_size=3, padding='same'),
-            LeakyReLU(alpha=0.1),
+            BatchNormalization(),
+            ReLU(),
+            Dropout(0.5),
             MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.25),
-
-            # Fourth convolution
-            Conv2D(filters=256, kernel_size=3, padding='same'),
-            LeakyReLU(alpha=0.1),
-            MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.25),
-
-            # Fifth convolution
-            Conv2D(filters=256, kernel_size=3, padding='same'),
-            LeakyReLU(alpha=0.1),
-            MaxPooling2D(pool_size=2, padding='same'),
-            Dropout(0.25),
 
             # Classification layer
             Flatten(),
-            Dense(64, kernel_regularizer=l2(1e-6)),
-            LeakyReLU(alpha=0.1),
-            Dropout(0.4),
-
-            Dense(64, kernel_regularizer=l2(1e-6)),
-            LeakyReLU(alpha=0.1),
+            Dense(128, kernel_regularizer=l2(1e-6)),
+            ReLU(),
             Dropout(0.5),
 
             # Output
-            Dense(1, activation='sigmoid')
-        ]
+            Dense(1, kernel_regularizer=l2(1e-6), activation='sigmoid')
+        ]) (input_layer)
 
-        output_layer = Sequential(layers)(cleaned_image)
-
-        self.model = Model(inputs=input_layer, outputs=output_layer)
+        self.model = Model(inputs=input_layer, outputs=classifier)
 
     def load(self, filename):
         self.model.load_weights(filename)
@@ -118,7 +93,7 @@ class ConvNetModel(ModelBase):
         # this generator does the bootstrap of a single sample.
         # batch_generator will create batches of these samples
 
-        # self.model.summary()
+        self.model.summary()
 
         opt = Adam(0.001)
         # opt = RMSprop(lr=2e-4)
@@ -127,7 +102,7 @@ class ConvNetModel(ModelBase):
 
         callbacks = [
             ReduceLROnPlateau(monitor='accuracy', min_delta=0.0001, patience=5, verbose=1, factor=0.5),
-            EarlyStopping(monitor='accuracy', min_delta=0.0001, patience=11, verbose=1)
+            #EarlyStopping(monitor='accuracy', min_delta=0.0001, patience=11, verbose=1)
         ]
 
         tf.random.set_seed(3)

@@ -1,6 +1,4 @@
 
-import math
-
 from util.config import *
 from util.helpers import img_crop
 from util.model_base import ModelBase
@@ -27,12 +25,12 @@ class Decomposer(ModelBase):
     # focus_size - size of the focus of a window (i.e. the part in the center of the window that will be classified
     #              by looking at the whole window)
     #
-    def __init__(self, model, do_recompose = False):
+    def __init__(self, model):
         self.model = model # (window) -> (patch)
 
         self.focus_size = focus_size
         self.window_size = window_size
-        self.do_recompose = do_recompose
+        self.padding = (self.window_size - self.focus_size) // 2
 
     def initialize(self):
         self.model.initialize()
@@ -57,21 +55,18 @@ class Decomposer(ModelBase):
                            window_center[1] - focus_size // 2: window_center[1] + focus_size // 2
                            ])
 
-        Y_sample = 1 * (Y_sample > 0.25)
-        # ~0.75 is the accuracy of the random classifier on the data we have
+        Y_sample = (np.array([Y_sample]) > 0.25) * 1
 
         # data augmentation: random flip and rotation (in steps of 90°)
-        # TODO: arbitrary rotation
         flip = np.random.choice(2)
         rot_step = np.random.choice(4)
 
         if flip: X_sample = np.fliplr(X_sample)
         X_sample = np.rot90(X_sample, rot_step)
-
         return Y_sample, X_sample
 
     def train(self, Y, X):
-        padding = (self.window_size - self.focus_size) // 2
+        padding = self.padding
 
         X_pad = np.empty((X.shape[0], X.shape[1] + 2*padding, X.shape[2] + 2*padding, X.shape[3]))
         Y_pad = np.empty((Y.shape[0], Y.shape[1] + 2*padding, Y.shape[2] + 2*padding))
@@ -81,27 +76,41 @@ class Decomposer(ModelBase):
             Y_pad[i] = pad_gt(Y[i], padding)
 
         def bootstrap(Y, X):
-            if val_batch_pool_size > 0:
-                perm = np.random.permutation(Y.shape[0])
+            while 1:
+                img_id = np.random.choice(X.shape[0])
+                yield self.sample_window(Y[img_id], X[img_id])
 
-                # extract for validation batch
-                # always extract val_batch_size samples from this generator to use as validation set
-                for _ in range(val_batch_size):
-                    img_id = np.random.choice(val_batch_pool_size)
-                    yield self.sample_window(Y[perm[img_id]], X[perm[img_id]])
+        print('valsplit')
+        perm = np.random.permutation(X.shape[0])
 
-                while 1:
-                    img_id = np.random.choice(X.shape[0] - val_batch_pool_size) + val_batch_pool_size
-                    yield self.sample_window(Y[perm[img_id]], X[perm[img_id]])
-            else:
-                while 1:
-                    img_id = np.random.choice(X.shape[0])
-                    yield self.sample_window(Y[img_id], X[img_id]) # more efficient
+        val_split = int(0.9 * X.shape[0])
+        Itr = perm[0: val_split]
+        Ival = perm[val_split: X.shape[0]]
 
-        self.train_online(bootstrap(Y_pad, X_pad), bootstrap(Y_pad, X_pad))
+        self.train_online(bootstrap(Y_pad[Itr], X_pad[Itr]), bootstrap(Y_pad[Ival], X_pad[Ival]))
 
     def train_online(self, generator, val_generator = None):
         self.model.train_online(generator, val_generator)
+
+    #
+    # Divides the image in windows.
+    # A window should be of shape (window_size, window_size, 3) and there
+    # should be (width / focus_size * height / focus_size) windows.
+    #
+    def crop_windows(self, X):
+        focus_size = self.focus_size
+        stride = self.focus_size
+        padding = self.padding
+
+        img_size = (X.shape[0], X.shape[1])
+        list_patches = []
+
+        X = pad_image(X, padding)
+        for i in range(padding, img_size[1] + padding, stride):
+            for j in range(padding, img_size[0] + padding, stride):
+                list_patches.append(X[j-padding:j+focus_size+padding, i-padding:i+focus_size+padding, :])
+
+        return list_patches
 
     #
     # Divides the given images into focus_size x focus_size squares, in order to classify them.
@@ -109,40 +118,12 @@ class Decomposer(ModelBase):
     # X - the list of images. This should be a numpy array with shape (num_images, width, height, channels)
     #
     def create_windows(self, X):
-        padding = (self.window_size - self.focus_size) // 2
-
-        windows = np.asarray([img_crop(X[i], self.focus_size, self.focus_size, self.focus_size, padding) for i in range(X.shape[0])])
+        windows = np.asarray([self.crop_windows(X[i]) for i in range(X.shape[0])])
         return windows.reshape((-1, windows.shape[2], windows.shape[3], windows.shape[4]))
 
-    #
-    # Recomposes the images from the classified patches.
-    # Y - numpy array of shape (num_of_img, ) containing the list of classes for each patch.
-    #     The classification is assumed to be patch-wise, with only one class for all the pixels of the path
-    # num_of_img - the number of images
-    # img_size - tuple (width, height) indicating the size of the images to reconstruct
-    #
-    def recompose(self, Y, num_of_img, img_size):
-        focus_size = self.focus_size
-
-        Y = Y.reshape((num_of_img, math.ceil(img_size[0] / focus_size), math.ceil(img_size[1] / focus_size)))
-        Y = np.transpose(Y, axes=[0, 2, 1])
-
-        Y = np.repeat(Y, focus_size, axis=1)
-        Y = np.repeat(Y, focus_size, axis=2)
-
-        return Y[:, 0:img_size[0], 0:img_size[1]]
-
     def classify(self, X):
-        num_of_img = X.shape[0]
-        img_size = (X.shape[1], X.shape[2])
-
         X_windows = self.create_windows(X)
-        Y_pred = self.model.classify(X_windows)
-
-        if self.do_recompose:
-            Y_pred = self.recompose(Y_pred, num_of_img, img_size)
-
-        return Y_pred
+        return self.model.classify(X_windows)
 
     def summary(self):
         self.model.summary()
