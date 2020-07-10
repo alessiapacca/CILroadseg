@@ -80,7 +80,6 @@ class Decomposer(ModelBase):
                 img_id = np.random.choice(X.shape[0])
                 yield self.sample_window(Y[img_id], X[img_id])
 
-        print('valsplit')
         perm = np.random.permutation(X.shape[0])
 
         val_split = int(0.9 * X.shape[0])
