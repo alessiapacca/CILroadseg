@@ -32,8 +32,7 @@ class RotAndVote(ModelBase):
 
         X_rots = np.empty((4*num_samples, X.shape[1], X.shape[2], X.shape[3]))
 
-        X_rots[0:num_samples] = X
-        for i in range(3):
+        for i in range(4):
             X_rots[i*num_samples:(i+1)*num_samples] = np.rot90(X, i+1, axes=(1, 2))
 
         Y_pred = model.classify(X_rots)
