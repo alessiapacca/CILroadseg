@@ -1,3 +1,4 @@
+from keras_preprocessing.image import ImageDataGenerator
 
 from util.config import *
 from util.helpers import img_crop
@@ -60,6 +61,10 @@ class Decomposer(ModelBase):
         # data augmentation: random flip and rotation (in steps of 90°)
         flip = np.random.choice(2)
         rot_step = np.random.choice(4)
+
+        # data augmentation: random brightness factor (-10%, +20%)
+        brightness_factor = 1 + (np.random.randint(-100, 200) / 100)
+        X_sample = np.clip(X_sample * brightness_factor, 0, 1)
 
         if flip: X_sample = np.fliplr(X_sample)
         X_sample = np.rot90(X_sample, rot_step)
