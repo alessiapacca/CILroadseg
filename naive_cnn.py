@@ -1,8 +1,9 @@
 
 import numpy as np
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import PolynomialFeatures
+from keras import Sequential
+from keras.layers import Conv2D, MaxPooling2D, ReLU, Dense
+from keras.optimizers import Adam
 
 from util.model_base import ModelBase
 
@@ -32,17 +33,6 @@ def patchify_gt(X):
     return patches
 
 
-def patches_to_features(X_patches):
-    # Basic features as suggested in project statement
-    X_mean = np.mean(X_patches, axis=(1,2))
-    X_var = np.var(X_patches, axis=(1,2))
-    X = np.append(X_mean, X_var)
-
-    # Polynomial expansion of features
-    poly_expansion = PolynomialFeatures(5, interaction_only=False)
-    return poly_expansion.fit_transform(X)
-
-
 def decompose(Y, X):
     X_patches = []
     Y_patches = []
@@ -54,21 +44,45 @@ def decompose(Y, X):
     X_patches = np.array(X_patches)
     Y_patches = np.array(Y_patches)
 
-    return Y_patches, patches_to_features(X_patches)
+    return Y_patches, X_patches
 
 
-class LogisticModel(ModelBase):
+class NaiveConvModel(ModelBase):
 
     def __init__(self):
         self.model = None
 
     def initialize(self):
-        self.model = LogisticRegression(C=1e5, class_weight='balanced')
+
+        layers = [
+            Conv2D(filters=32, kernel_size=5, input_shape=(16, 16, 3)),
+            ReLU(),
+            MaxPooling2D(size=2),
+
+            Conv2D(filters=64, kernel_size=5),
+            ReLU(),
+            MaxPooling2D(size=2),
+
+            Dense(64),
+            ReLU(),
+
+            Dense(1, activation='sigmoid')
+        ]
+
+        self.model = Sequential(layers)
+
+    def load(self, filename):
+        self.model.load_weights(filename)
+
+    def save(self, filename):
+        self.model.save_weights(filename)
 
     def train(self, Y, X):
         Y_f, X_f = decompose(Y, X)
 
-        self.model.fit(Y_f, X_f)
+        self.model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['accuracy'])
+
+        self.model.fit(X_f, Y_f, batch_size=150, epochs=100)
 
     def classify(self, X):
         X_patches = []
@@ -76,6 +90,5 @@ class LogisticModel(ModelBase):
         for i in range(X.shape[0]):
             X_patches += patchify(X[i])
 
-        X_features = patches_to_features(np.array(X_patches))
-
-        return self.model.predict(X_features)
+        Z = self.model.predict(np.array(X_patches))
+        return (Z >= 0.5) * 1
