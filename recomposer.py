@@ -16,7 +16,7 @@ class Recomposer(ModelBase):
     # focus_size - size of the focus of a window (i.e. the part in the center of the window that will be classified
     #              by looking at the whole window)
     #
-    def __init__(self, model):
+    def __init__(self, model, focus_size=16):
         self.model = model
 
         self.focus_size = focus_size

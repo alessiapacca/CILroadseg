@@ -4,8 +4,9 @@ from util.model_base import ModelBase
 
 class Discretizer(ModelBase):
 
-    def __init__(self, model):
+    def __init__(self, model, threshold=0.5):
         self.model = model
+        self.threshold = threshold
 
     def initialize(self):
         self.model.initialize()
@@ -18,7 +19,7 @@ class Discretizer(ModelBase):
 
     def classify(self, X):
         Z = self.model.classify(X)
-        return (Z >= 0.5) * 1
+        return (Z >= self.threshold) * 1
 
     def save(self, filename):
         self.model.save(filename)

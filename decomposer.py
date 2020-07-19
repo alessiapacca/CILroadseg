@@ -1,7 +1,5 @@
-from keras_preprocessing.image import ImageDataGenerator
 
 from util.config import *
-from util.helpers import img_crop
 from util.model_base import ModelBase
 
 
@@ -26,8 +24,10 @@ class Decomposer(ModelBase):
     # focus_size - size of the focus of a window (i.e. the part in the center of the window that will be classified
     #              by looking at the whole window)
     #
-    def __init__(self, model):
+    def __init__(self, model, augment_brightness=True):
         self.model = model # (window) -> (patch)
+
+        self.augment_brightness = augment_brightness
 
         self.focus_size = focus_size
         self.window_size = window_size
@@ -63,8 +63,9 @@ class Decomposer(ModelBase):
         rot_step = np.random.choice(4)
 
         # data augmentation: random brightness factor (-10%, +20%)
-        brightness_factor = 1 + (np.random.randint(-100, 200) / 100)
-        X_sample = np.clip(X_sample * brightness_factor, 0, 1)
+        if self.augment_brightness:
+            brightness_factor = 1 + (np.random.randint(-100, 200) / 100)
+            X_sample = np.clip(X_sample * brightness_factor, 0, 1)
 
         if flip: X_sample = np.fliplr(X_sample)
         X_sample = np.rot90(X_sample, rot_step)
