@@ -2,7 +2,7 @@
 import numpy as np
 
 from keras import Sequential
-from keras.layers import Conv2D, MaxPooling2D, ReLU, Dense
+from keras.layers import Conv2D, MaxPooling2D, ReLU, Dense, Flatten
 from keras.optimizers import Adam
 
 from util.model_base import ModelBase
@@ -57,12 +57,13 @@ class NaiveConvModel(ModelBase):
         layers = [
             Conv2D(filters=32, kernel_size=5, input_shape=(16, 16, 3)),
             ReLU(),
-            MaxPooling2D(size=2),
+            MaxPooling2D(pool_size=2),
 
             Conv2D(filters=64, kernel_size=5),
             ReLU(),
-            MaxPooling2D(size=2),
+            MaxPooling2D(pool_size=2),
 
+            Flatten(),
             Dense(64),
             ReLU(),
 
@@ -80,6 +81,7 @@ class NaiveConvModel(ModelBase):
     def train(self, Y, X):
         Y_f, X_f = decompose(Y, X)
 
+        self.model.summary()
         self.model.compile(optimizer=Adam(), loss='binary_crossentropy', metrics=['accuracy'])
 
         self.model.fit(X_f, Y_f, batch_size=150, epochs=100)
