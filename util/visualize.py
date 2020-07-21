@@ -28,8 +28,6 @@ def view_image_mask2(x, y, y_true):
 
 
 def view_image_array(X, Y1, Y2=None, Y3=None):
-    print('Image | Mask | RotAndVote | RotAndMean')
-
     cols = 2
     if Y2 is not None:
         cols += 1
@@ -37,7 +35,7 @@ def view_image_array(X, Y1, Y2=None, Y3=None):
     if Y3 is not None:
         cols += 1
 
-    fig = plt.figure(figsize=(30, 100))
+    fig = plt.figure(figsize=(30, X.shape[0] * 10))
     for i in range(X.shape[0]):
         fig.add_subplot(X.shape[0], cols, cols * i + 1)
         plt.imshow(X[i])

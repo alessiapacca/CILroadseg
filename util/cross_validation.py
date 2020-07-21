@@ -22,6 +22,9 @@ def validate_fold(model, fold, non_fold, X, Y):
 
     Z = model.classify(X_te)
 
+    if Z.ndim > 2:
+        Z = np.mean(create_patches_gt(Z, 16, 16), axis=(1, 2)) > 0.25
+
     Y_te = np.mean(create_patches_gt(Y_te, 16, 16), axis=(1, 2)) > 0.25
     '''
     if Z.shape != Y_te.shape:
@@ -38,6 +41,8 @@ def validate_fold(model, fold, non_fold, X, Y):
 # X, Y - numpy array containing training data (input, labels)
 #
 def cross_validate(model, K, X, Y):
+    print('newcv')
+
     perm = np.random.permutation(Y.shape[0]) # randomize folds
     # Y.shape[0] is the number of samples
 
