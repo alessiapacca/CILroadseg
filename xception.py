@@ -60,9 +60,9 @@ class XceptionModel(ModelBase):
 
             Flatten(),
             Dense(64, activation='relu', input_dim=input_shape),
-            Dropout(0.15),
+            Dropout(0.3),
             Dense(64, activation='relu'),
-            Dropout(0.15),
+            Dropout(0.2),
             Dense(1, activation='sigmoid')
         ]
 
