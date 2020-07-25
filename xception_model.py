@@ -3,7 +3,7 @@ from keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten
 from tensorflow.keras.layers import Convolution2D, MaxPooling2D
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from decomposer import *
-from util.config import *
+from util.config_xception import *
 from util.visualize import * 
 from keras.optimizers import Adam
 from keras import optimizers
