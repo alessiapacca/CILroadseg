@@ -1,10 +1,6 @@
-from keras_preprocessing.image import ImageDataGenerator
-
 from util.config import *
-from util.helpers import img_crop
 from util.model_base import ModelBase
 
-focus_size = 16
 
 # Pad given image applying reflect on borders
 def pad_image(X, padding):
@@ -30,7 +26,7 @@ class Decomposer(ModelBase):
     def __init__(self, model, window_size):
         self.model = model # (window) -> (patch)
 
-        self.focus_size = focus_size
+        self.focus_size = 16
         self.window_size = window_size
         self.padding = (self.window_size - self.focus_size) // 2
 
