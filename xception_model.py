@@ -4,7 +4,7 @@ from tensorflow.keras.layers import Convolution2D, MaxPooling2D
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from decomposer import *
 from util.config_xception import *
-from util.visualize import * 
+from util.visualize import *
 from keras.optimizers import Adam
 from keras import optimizers
 from keras.utils import np_utils
@@ -12,6 +12,11 @@ from keras.callbacks import EarlyStopping
 from keras import Sequential
 from keras.applications.xception import Xception
 
+batch_size = 50
+val_batch_size = 1000
+
+steps_per_epoch = 200
+epochs = 20
 
 # let's say we want just 1 output
 def batch_generator(bootstrap):
@@ -82,15 +87,15 @@ class Xception_Model(ModelBase):
 
         self.model.compile(optimizer=adam, loss='binary_crossentropy', metrics=['accuracy'])
 
-        
+
         callbacks = [
             ReduceLROnPlateau(monitor='val_accuracy', min_delta=0.0001, patience=4,
                               verbose=1, mode='auto', factor=0.5, cooldown=0, min_lr=0),
             EarlyStopping(monitor='val_accuracy', min_delta=0.0001, patience=10,
                           verbose=1, mode='auto')
         ]
-     
-       
+
+
         X_val, Y_val = next(val_batch_generator(val_generator))
 
         np.random.seed(3)  # fix randomness

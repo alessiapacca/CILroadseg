@@ -1,7 +1,10 @@
+from keras_preprocessing.image import ImageDataGenerator
 
 from util.config import *
+from util.helpers import img_crop
 from util.model_base import ModelBase
 
+focus_size = 16
 
 # Pad given image applying reflect on borders
 def pad_image(X, padding):
@@ -21,6 +24,8 @@ class Decomposer(ModelBase):
     # model - model that takes a window (window_size * window_size) and returns
     #         a patch (patch_size * patch_size)
     # window_size - size of the image window the inner model will take into account in order to do a classification
+    # focus_size - size of the focus of a window (i.e. the part in the center of the window that will be classified
+    #              by looking at the whole window)
     #
     def __init__(self, model, window_size):
         self.model = model # (window) -> (patch)
@@ -58,6 +63,10 @@ class Decomposer(ModelBase):
         flip = np.random.choice(2)
         rot_step = np.random.choice(4)
 
+        # data augmentation: random brightness factor (-10%, +20%)
+        brightness_factor = 1 + (np.random.randint(-100, 200) / 100)
+        X_sample = np.clip(X_sample * brightness_factor, 0, 1)
+
         if flip: X_sample = np.fliplr(X_sample)
         X_sample = np.rot90(X_sample, rot_step)
         return Y_sample, X_sample
@@ -65,8 +74,6 @@ class Decomposer(ModelBase):
     def train(self, Y, X):
         padding = self.padding
 
-        # pad the image with reflect boundary conditions
-        # in order to be able to sample the corners of the image
         X_pad = np.empty((X.shape[0], X.shape[1] + 2*padding, X.shape[2] + 2*padding, X.shape[3]))
         Y_pad = np.empty((Y.shape[0], Y.shape[1] + 2*padding, Y.shape[2] + 2*padding))
 
