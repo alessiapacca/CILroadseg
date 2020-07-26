@@ -31,17 +31,25 @@ class RotAndMean(ModelBase):
         X_rots = np.empty((8*num_samples, X.shape[1], X.shape[2], X.shape[3]))
 
         for i in range(4):
-            X_rots[i*num_samples:(i+1)*num_samples] = np.rot90(X, i+1, axes=(1, 2))
+            X_rots[i*num_samples:(i+1)*num_samples] = np.rot90(X, i, axes=(1, 2))
 
-        for i in range(4):
-            X_rots[(i+4)*num_samples:(i+5)*num_samples] = np.fliplr(np.rot90(X, i+1, axes=(1, 2)))
+            for j in range(i*num_samples, (i+1)*num_samples): # copy the array but flipped
+                X_rots[j + 4*num_samples] = np.fliplr(X_rots[j])
 
         Y_pred = model.classify(X_rots)
-        Y_pred = Y_pred.reshape((48, num_samples))
+        if Y_pred.ndim > 2:  # self.model returns full masks
 
-        Y_pred = np.mean(Y_pred, axis=0)
-        Y_pred = (Y_pred >= 0.5) * 1
-        return Y_pred
+            for j in range(4*num_samples, 8*num_samples): # reflip
+                Y_pred[j] = np.fliplr(Y_pred[j])
+
+            for i in range(4): # rerotate
+                Y_pred[i*num_samples:(i+1)*num_samples] = np.rot90(Y_pred[i*num_samples:(i+1)*num_samples], 4-i, axes=(1, 2))
+
+            Y_pred = Y_pred.reshape((8, num_samples, Y_pred.shape[1], Y_pred.shape[2]))
+        else:  # self.model returns patchwise classifications
+            Y_pred = Y_pred.reshape((8, num_samples))
+
+        return np.mean(Y_pred, axis=0)
 
     def save(self, filename):
         self.model.save(filename)
