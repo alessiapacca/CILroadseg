@@ -56,10 +56,6 @@ def view_image_array(X, Y1, Y2=None, Y3=None):
     plt.show()
 
 
-def save_image(x, filename):
-    Image.fromarray(np.uint8(x * 255)).save(filename)
-
-
 def plot_history(history):
     plt.plot(history.history['accuracy'])
     plt.plot(history.history['val_accuracy'])

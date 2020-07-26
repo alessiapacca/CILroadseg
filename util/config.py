@@ -1,9 +1,7 @@
+
 import numpy as np
 from sklearn.metrics import f1_score
 
-
-# seed used for pseudo-random number generators
-RND_SEED = 1
 
 # score functions
 def accuracy(Y, Y_star):

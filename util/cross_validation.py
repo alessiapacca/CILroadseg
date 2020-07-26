@@ -1,7 +1,21 @@
 
 from util.config import *
-from util.helpers import *
 
+def img_crop_gt(X):
+    patches = []
+
+    for i in range(0, X.shape[1], 16):
+        for j in range(0, X.shape[0], 16):
+            im_patch = X[j:j+16, i:i+16]
+            patches.append(im_patch)
+
+    return patches
+
+# Divides gt images into 16x16 patches
+def patchify_gt(X):
+    X_patches = np.asarray([img_crop_gt(X[i]) for i in range(X.shape[0])])
+
+    return X_patches.reshape((-1, X_patches.shape[2], X_patches.shape[3]))
 
 #
 # Validates the given model using the given sample indices as validation set.
@@ -22,10 +36,10 @@ def validate_fold(model, fold, non_fold, X, Y):
 
     Z = model.classify(X_te)
 
-    if Z.ndim > 2:
-        Z = np.mean(create_patches_gt(Z, 16, 16), axis=(1, 2)) > 0.25
+    if Z.ndim > 2: # These are full masks and should be patchified
+        Z = np.mean(patchify_gt(Z), axis=(1, 2)) > 0.25
 
-    Y_te = np.mean(create_patches_gt(Y_te, 16, 16), axis=(1, 2)) > 0.25
+    Y_te = np.mean(patchify_gt(Y_te), axis=(1, 2)) > 0.25
     '''
     if Z.shape != Y_te.shape:
         raise ValueError('The model returned data with different shape: (' + str(Z.shape) + ' vs ' + str(Y_te.shape) + ')')
@@ -41,8 +55,6 @@ def validate_fold(model, fold, non_fold, X, Y):
 # X, Y - numpy array containing training data (input, labels)
 #
 def cross_validate(model, K, X, Y):
-    print('newcv')
-
     perm = np.random.permutation(Y.shape[0]) # randomize folds
     # Y.shape[0] is the number of samples
 
