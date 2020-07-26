@@ -14,6 +14,7 @@ from keras.applications.xception import Xception
 
 batch_size = 50
 val_batch_size = 1000
+window_size = 200
 
 steps_per_epoch = 200
 epochs = 20
@@ -44,6 +45,7 @@ def val_batch_generator(bootstrap):
 class Xception_Model(ModelBase):
 
     def __init__(self):
+        self.window_size = window_size
         self.model = None
 
     def initialize(self):

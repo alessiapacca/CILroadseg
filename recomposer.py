@@ -4,7 +4,6 @@ import math
 from util.config import *
 from util.model_base import ModelBase
 
-
 #
 # Decorator class: recomposes the patch classifications into an image (mask)
 #
