@@ -1,16 +1,12 @@
-from keras.models import Model
-from keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten
-from tensorflow.keras.layers import Convolution2D, MaxPooling2D
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-from decomposer import *
-from util.config import *
-from util.visualize import *
-from keras.optimizers import Adam
-from keras import optimizers
-from keras.utils import np_utils
-from keras.callbacks import EarlyStopping
 from keras import Sequential
 from keras.applications.xception import Xception
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.layers import Dense, Dropout, Flatten
+from keras.models import Model
+from keras.optimizers import Adam
+
+from decomposer import *
+from util.visualize import *
 
 batch_size = 50
 val_batch_size = 1000
@@ -42,16 +38,16 @@ def val_batch_generator(bootstrap):
 
         yield (X_batch, Y_batch)
 
-class Xception_Model(ModelBase):
+class XceptionModel(ModelBase):
 
     def __init__(self):
         self.window_size = window_size
         self.model = None
 
     def initialize(self):
-        input_shape = (200, 200, 3)
+        input_shape = (window_size, window_size, 3)
+
         xcept = Xception(weights="imagenet", include_top=False, input_shape=input_shape, classes=1)
-        print('create xcept model')
         output = xcept.layers[-1].output
         output = Flatten()(output)
         xcept = Model(xcept.input, output)
@@ -63,12 +59,9 @@ class Xception_Model(ModelBase):
         model.add(Dense(64, activation='relu'))
         model.add(Dropout(rate=0.3))
         model.add(Dense(1, activation='sigmoid'))
-        print('created xcept model successfully')
+
         self.model = model
         self.model.summary()
-
-        for i, layer in enumerate(xcept.layers):
-            print(i, layer.name)
 
         for layer in xcept.layers[:75]:
             layer.trainable = False
@@ -85,18 +78,13 @@ class Xception_Model(ModelBase):
     def train_online(self, generator, val_generator = None):
         # this generator does the bootstrap of a single sample.
         # batch_generator will create batches of these samples
-        adam = Adam(lr=0.001)  # Adam optimizer with default initial learning rate
 
-        self.model.compile(optimizer=adam, loss='binary_crossentropy', metrics=['accuracy'])
-
+        self.model.compile(optimizer=Adam(0.001), loss='binary_crossentropy', metrics=['accuracy'])
 
         callbacks = [
-            ReduceLROnPlateau(monitor='val_accuracy', min_delta=0.0001, patience=4,
-                              verbose=1, mode='auto', factor=0.5, cooldown=0, min_lr=0),
-            EarlyStopping(monitor='val_accuracy', min_delta=0.0001, patience=10,
-                          verbose=1, mode='auto')
+            ReduceLROnPlateau(monitor='val_accuracy', min_delta=0.0001, patience=4, verbose=1, factor=0.5),
+            EarlyStopping(monitor='val_accuracy', min_delta=0.0001, patience=10, verbose=1)
         ]
-
 
         X_val, Y_val = next(val_batch_generator(val_generator))
 
@@ -111,5 +99,4 @@ class Xception_Model(ModelBase):
         plot_history(history)
 
     def classify(self, X):
-        Z = self.model.predict(X)
-        return Z
+        return self.model.predict(X)
