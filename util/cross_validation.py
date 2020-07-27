@@ -1,21 +1,6 @@
 
 from util.config import *
-
-def img_crop_gt(X):
-    patches = []
-
-    for i in range(0, X.shape[1], 16):
-        for j in range(0, X.shape[0], 16):
-            im_patch = X[j:j+16, i:i+16]
-            patches.append(im_patch)
-
-    return patches
-
-# Divides gt images into 16x16 patches
-def patchify_gt(X):
-    X_patches = np.asarray([img_crop_gt(X[i]) for i in range(X.shape[0])])
-
-    return X_patches.reshape((-1, X_patches.shape[2], X_patches.shape[3]))
+from util.helpers import *
 
 #
 # Validates the given model using the given sample indices as validation set.
