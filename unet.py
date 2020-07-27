@@ -1,117 +1,89 @@
-import tensorflow as tf
 
-from keras import Input, Model, Sequential
-from keras.callbacks import ReduceLROnPlateau, EarlyStopping
-from keras.layers import Conv2D, MaxPooling2D, Dropout, UpSampling2D, ReLU, Conv2DTranspose, LeakyReLU, \
-    BatchNormalization
+from keras import Input, Model
+from keras.callbacks import ReduceLROnPlateau, EarlyStopping, ModelCheckpoint
+from keras.layers import Conv2D, MaxPooling2D, Dropout, ReLU, UpSampling2D
 from keras.layers.merge import concatenate
-from keras.optimizers import Adam, SGD
-from keras import backend as K
+from keras.optimizers import Adam
 from keras_preprocessing.image import ImageDataGenerator
 
 from decomposer import *
 from util.config import *
 
-SEED = 1998
+
+SEED = 4
+WINDOW_SIZE = 304
+
 BATCH_SIZE = 8
-STEPS_PER_EPOCH = 300
+STEPS_PER_EPOCH = 500
+EPOCHS = 50
 
+def convolve(input, filters, kernel_size=3):
+    conv = Conv2D(filters=filters, kernel_size=kernel_size, padding='same', kernel_initializer='normal')(input)
+    #conv = BatchNormalization()(conv)
+    conv = ReLU()(conv)
 
-def jaccard_distance_loss(y_true, y_pred, smooth=100):
-    intersection = K.sum(K.abs(y_true * y_pred), axis=-1)
-    sum_ = K.sum(K.abs(y_true) + K.abs(y_pred), axis=-1)
-    jac = (intersection + smooth) / (sum_ - intersection + smooth)
-    return (1 - jac) * smooth
+    conv = Conv2D(filters=filters, kernel_size=kernel_size, padding='same', kernel_initializer='normal')(conv)
+    #conv = BatchNormalization()(conv)
+    conv = ReLU()(conv)
 
-def convolve(filters):
-    convolve.id += 1
-    return Sequential([
-        Conv2D(filters, 3, padding='same', kernel_initializer='random_uniform'),
-        ReLU(),
-        Dropout(0.25),
-        Conv2D(filters, 3, padding='same', kernel_initializer='random_uniform'),
-        ReLU(),
-        Dropout(0.25)
-    ], name='conv_block_'+ str(convolve.id))
-convolve.id = -1
+    return conv
 
-def transpose_convolve(filters):
-    transpose_convolve.id += 1
-    return Conv2DTranspose(filters=filters, strides=2, kernel_size=3, padding='same', name='tconv_block_'+ str(convolve.id))
-transpose_convolve.id = -1
+def transpose_convolve(input, filters):
+    up = UpSampling2D(size=2)(input)
+    up = Conv2D(filters=filters, kernel_size=3, padding='same', kernel_initializer="normal")(up)
+    return ReLU()(up)
+    #return Conv2DTranspose(filters=filters, strides=2, kernel_size=3, padding='same')(input)
 
-def pool():
-    return MaxPooling2D(pool_size=2)
-
-
-
-def trainGenerator(X, Y):
-
-    data_gen_args = dict(rotation_range=0.2,
-                         width_shift_range=0.05,
-                         height_shift_range=0.05,
-                         shear_range=0.05,
-                         zoom_range=0.05,
-                         horizontal_flip=True,
-                         fill_mode='nearest')
-
-    image_datagen = ImageDataGenerator(**data_gen_args)
-    mask_datagen = ImageDataGenerator(**data_gen_args)
-    image_generator = image_datagen.flow(X, batch_size=BATCH_SIZE, seed=SEED)
-    mask_generator = mask_datagen.flow(Y, batch_size=BATCH_SIZE, seed=SEED)
-
-    for img, mask in zip(image_generator, mask_generator):
-        yield (img, mask)
+def pool(input):
+    return MaxPooling2D(pool_size=2)(input)
 
 
 class UNetModel(ModelBase):
 
-    def __init__(self):
-        self.window_size = window_size
+    #
+    # dense_prediction - If True, 9 predictions per image are done, as explained in the report
+    #                  - If False, only 4 predictions are done
+    # augment_colors   - If True, also brightness and contrast factors are augmented.
+    #
+    def __init__(self, dense_prediction=True, augment_colors=True):
         self.model = None
 
+        self.dense_prediction = dense_prediction
+        self.augment_colors = augment_colors
+
     def initialize(self):
-        print('y')
+        inputs = Input((WINDOW_SIZE, WINDOW_SIZE, 3))
 
-        inputs = Input((400, 400, 3))
+        base_filters = 32
+        unet_depth = 4
 
-        base_filters = 64
+        down_socket = []
+        dropouts = [0, 0, 0, 0]
+        kernel_sizes = [5, 3, 3, 3]
 
-        # Downsampling (400x400x3 -> 25x25x1024)
-        conv1 = convolve(base_filters)(inputs)
-        down1 = pool()(conv1)
+        # Downsampling construction
+        down = inputs
+        for i in range(unet_depth):
+            conv = convolve(down, base_filters, kernel_size=kernel_sizes[i])
 
-        conv2 = convolve(base_filters * 2)(down1)
-        down2 = pool()(conv2)
+            if dropouts[i] > 0: conv = Dropout(dropouts[i])(conv)
+            down = pool(conv)
 
-        conv3 = convolve(base_filters * 4)(down2)
-        down3 = pool()(conv3)
-
-        conv4 = convolve(base_filters * 8)(down3)
-        down4 = pool()(conv4)
+            down_socket.append(conv)
+            base_filters *= 2
 
         # Bottom Layers
-        deconv5 = convolve(base_filters * 16)(down4)
-        up4 = transpose_convolve(base_filters * 8)(deconv5)
+        deconv = convolve(down, base_filters)
+        #deconv = Dropout(0.2)(deconv)
 
-        # Upsampling (25x25x1024 -> 400x400x1)
-        merge4 = concatenate([conv4, up4], axis=3)
-        deconv4 = convolve(base_filters * 8)(merge4)
-        up3 = transpose_convolve(base_filters * 4)(deconv4)
+        for i in reversed(range(unet_depth)):
+            base_filters //= 2
+            up = transpose_convolve(deconv, base_filters)
 
-        merge3 = concatenate([conv3, up3], axis=3)
-        deconv3 = convolve(base_filters * 4)(merge3)
-        up2 = transpose_convolve(base_filters * 2)(deconv3)
+            merge = concatenate([down_socket[i], up], axis=3)
+            deconv = convolve(merge, base_filters)
 
-        merge2 = concatenate([conv2, up2], axis=3)
-        deconv2 = convolve(base_filters * 2)(merge2)
-        up1 = transpose_convolve(base_filters)(deconv2)
-
-        merge1 = concatenate([conv1, up1], axis=3)
-        deconv1 = convolve(base_filters)(merge1)
-
-        #logits = Conv2D(2, 3, activation='relu', padding='same', data_format='channels_last')(deconv1)
-        output = Conv2D(1, 1, activation='sigmoid')(deconv1)
+        output = Conv2D(1, 1, activation='sigmoid')(deconv)
 
         self.model = Model(inputs=inputs, outputs=output)
 
@@ -126,73 +98,118 @@ class UNetModel(ModelBase):
 
         self.model.summary()
 
-        opt = Adam(lr=0.001)
+        opt = Adam()
         #opt = SGD()
 
-        self.model.compile(optimizer=opt, loss=jaccard_distance_loss, metrics=['accuracy'])
+        self.model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 
         callbacks = [
-            ReduceLROnPlateau(monitor='loss', min_delta=0.0001, patience=5, verbose=1, factor=0.5),
-            EarlyStopping(monitor='accuracy', min_delta=0.0001, patience=11, verbose=1)
+            ReduceLROnPlateau(monitor='accuracy', min_delta=0.0001, patience=5, verbose=1, factor=0.5),
+            EarlyStopping(monitor='accuracy', min_delta=0.0001, patience=11, verbose=1),
+            ModelCheckpoint(filepath='saves/checkpoints/cp-{epoch}.h5',
+                save_weights_only=True,
+                monitor='accuracy')
         ]
 
-        tf.random.set_seed(3)
-
         def datagen(X, Y):
+            datagen = ImageDataGenerator(rotation_range=360.,
+                                         horizontal_flip=True,
+                                         vertical_flip=True,
+                                         zoom_range=0.2,
+                                         fill_mode='reflect')
+
+            Xgen = datagen.flow(X, batch_size=BATCH_SIZE, seed=SEED)
+            Ygen = datagen.flow(Y, batch_size=BATCH_SIZE, seed=SEED)
+
+            for x, y in zip(Xgen, Ygen):
+                yield x, y
+
+        def random_cropper(generator):
             while 1:
-                X_batch = np.empty((BATCH_SIZE, 400, 400, 3))
-                Y_batch = np.empty((BATCH_SIZE, 400, 400, 1))
+                X_batch = np.empty((BATCH_SIZE, WINDOW_SIZE, WINDOW_SIZE, 3))
+                Y_batch = np.empty((BATCH_SIZE, WINDOW_SIZE, WINDOW_SIZE, 1))
 
-                for i in range(BATCH_SIZE):
-                    img_id = np.random.choice(X.shape[0])
-                    x = X[img_id]
-                    y = Y[img_id]
+                X_batch_gen, Y_batch_gen = next(generator)
+                for i in range(X_batch_gen.shape[0]):
+                    cur_img, cur_lbl = X_batch_gen[i], Y_batch_gen[i]
 
-                    flip = np.random.choice(2)
-                    rot_step = np.random.choice(4)
+                    window_center = (np.random.randint(WINDOW_SIZE // 2, cur_img.shape[0] - WINDOW_SIZE // 2),
+                                     np.random.randint(WINDOW_SIZE // 2, cur_img.shape[1] - WINDOW_SIZE // 2))
 
-                    if flip:
-                        x = np.fliplr(x)
-                        y = np.fliplr(y)
+                    X_sample = cur_img[
+                        window_center[0] - WINDOW_SIZE // 2: window_center[0] + WINDOW_SIZE // 2,
+                        window_center[1] - WINDOW_SIZE // 2: window_center[1] + WINDOW_SIZE // 2
+                    ]
 
-                    X_batch[i] = np.rot90(x, rot_step)
-                    Y_batch[i] = np.rot90(y, rot_step)
+                    Y_sample = cur_lbl[
+                        window_center[0] - WINDOW_SIZE // 2: window_center[0] + WINDOW_SIZE // 2,
+                        window_center[1] - WINDOW_SIZE // 2: window_center[1] + WINDOW_SIZE // 2
+                    ]
+
+                    if self.augment_colors:
+                        contrast_factor = 1 + (np.random.randint(0, 100) / 100)
+                        brightness_factor = 1 + (np.random.randint(0, 100) / 100)
+
+                        X_sample = np.clip(X_sample * brightness_factor, 0, 1)
+                        X_sample = np.clip(0.5 + contrast_factor * (X_sample - 0.5), 0, 1)
+
+                    X_batch[i] = X_sample
+                    Y_batch[i] = Y_sample
 
                 yield (X_batch, Y_batch)
 
         self.model.fit_generator(
-            trainGenerator(X, Y),
+            random_cropper(datagen(X, Y)),
             steps_per_epoch=STEPS_PER_EPOCH,
-            epochs=epochs,
+            epochs=EPOCHS,
             verbose=2,
             callbacks=callbacks
         )
 
-    # This method is used to adapt the 400x400 size of the CNN to the 608x608 size of test data.
-    # It just predicts four 400x400 images to compose the mask, overwriting overlapping pixels.
-    def predict_img(self, img):
-        img1 = img[:400,:400]
-        img2 = img[:400,-400:]
-        img3 = img[-400:,:400]
-        img4 = img[-400:,-400:]
-        imgs = np.array([img1,img2,img3,img4])
-        labels = self.model.predict(imgs)
-        img_label = np.empty((608,608,1))
-        img_label[-400:,-400:] = labels[3]
-        img_label[-400:,:400] = labels[2]
-        img_label[:400,-400:] = labels[1]
-        img_label[:400,:400] = labels[0]
-        return img_label
-
     def classify(self, X):
-        # FIXME this takes a great amount of memory
-        # model.predict() should be called once.
-
         Z = np.empty((X.shape[0], X.shape[1], X.shape[2], 1))
         for i in range(X.shape[0]):
-            Z[i] = self.predict_img(X[i])
+            Z[i] = self.segment_image(X[i])
 
-        return Z.reshape((X.shape[0],X.shape[1],X.shape[2]))
+        return Z.reshape((X.shape[0], X.shape[1], X.shape[2]))
+
+    def segment_image(self, X):
+        fragments = []
+
+        w = X.shape[0]
+        h = X.shape[1]
+        WS = WINDOW_SIZE
+
+        fragments.append(X[:WS, :WS])
+        fragments.append(X[:WS, -WS:])
+        fragments.append(X[-WS:, :WS])
+        fragments.append(X[-WS:, -WS:])
+
+        if self.dense_prediction:
+            fragments.append(X[w//2-WS//2: w//2+WS//2, h//2-WS//2:h//2+WS//2])
+            fragments.append(X[w//2-WS//2: w//2+WS//2, :WS])
+            fragments.append(X[w//2-WS//2: w//2+WS//2, -WS:])
+            fragments.append(X[:WS, h//2-WS//2:h//2+WS//2])
+            fragments.append(X[-WS:, h//2-WS//2:h//2+WS//2])
+
+        Y = self.model.predict(np.array(fragments))
+
+        Z = np.empty((w, h, 1))
+        Z[-WS:, -WS:] = Y[3]
+        Z[-WS:, :WS] = Y[2]
+        Z[:WS, -WS:] = Y[1]
+        Z[:WS, :WS] = Y[0]
+
+        if self.dense_prediction:
+            Z[w//2-100: w//2+100, :WS]  = Y[5][WS//2-100: WS//2+100, :WS]
+            Z[w//2-100: w//2+100, -WS:] = Y[6][WS//2-100: WS//2+100, -WS:]
+            Z[:WS, h//2-100: h//2+100]  = Y[7][:WS, WS//2-100: WS//2+100]
+            Z[-WS:, h//2-100: h//2+100] = Y[8][-WS:, WS//2-100: WS//2+100]
+
+            Z[w//2-100: w//2+100, h//2-100: h//2+100] = Y[4][WS//2-100: WS//2+100, WS//2-100: WS//2+100]
+
+        return Z
+
 
 
 
