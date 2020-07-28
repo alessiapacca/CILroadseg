@@ -27,10 +27,10 @@ class Patchifier(ModelBase):
 
     def __init__(self, model, threshold=0.25):
         self.model = model
-        self.threshold = 0.25
+        self.threshold = threshold
 
     def classify(self, X):
-        return np.mean(patchify_gt(self.model.classify(X)), axis=(1, 2)) >= self.threshold
+        return np.mean(patchify_gt(self.model.classify(X)), axis=(1, 2)) > self.threshold
 
 
 def load_image(filename):
