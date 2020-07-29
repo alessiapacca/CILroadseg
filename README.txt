@@ -135,3 +135,37 @@ training and thus it does not have a different .h5 file.
         xception with rotation/flip augmentation,
         trained with the additional data mentioned
         in the report, Section III(B).
+
+==========================================================
+VOTER PARAMETERS:
+In saves/final/bagging/ we have 9 different weight files.
+All of them have rotate/flip/zoom augmentation.
+
+- unet-1.h5
+        no color augmentation
+- unet-2.h5
+        brightness range [1, 1.1]
+        contrast range [1, 1.1]
+- unet-3.h5
+        brightness range [1, 1.1]
+        contrast range [1, 1.1]
+- unet-4.h5
+        brightness range [1, 1.1]
+        contrast range [1, 1.1]
+        dropout 0.1 on bottom layer (before first upsample)
+- unet-5.h5
+        brightness range [1, 1.2]
+        no contrast
+- unet-6.h5
+        brightness range [1, 1.2]
+        contrast range [1, 1.1]
+- unet-7.h5
+        brightness range [0.9, 1.2]
+        contrast range [0.9, 1.2]
+- unet-8.h5
+        brightness range [1, 1.1]
+        no contrast
+        dropout 0.1 on bottom layer (before first upsample)
+- unet-9.h5
+        brightness range [1, 1.1]
+        contrast range [1, 1.1]
