@@ -13,6 +13,38 @@ understand the structure and usage of our classes, we
 recommend to follow the Jupyter Notebooks we provided in
 this directory.
 
+Please download the directory in the following repository:
+
+    https://github.com/NoImaginationGuy/CILroadseg
+
+This repository is kept private until 31.09.2020 23.59,
+and no commit will be made after this date.
+
+The following two files are of size larger than 100MB:
+
+saves/final/xception-base.h5
+saves/final/xception-additionaldata.h5
+
+and are uploaded using GIT LFS.
+Please install git-lfs (https://git-lfs.github.com/)
+before cloning the repository or download the files
+from:
+
+https://www.polybox.ethz.ch/index.php/s/oqRA2nf89D4vFL2
+[ETH VPN required]
+
+or singularly from:
+
+https://github.com/NoImaginationGuy/CILroadseg/blob/master/saves/final/xception-base.h5
+https://github.com/NoImaginationGuy/CILroadseg/blob/master/saves/final/xception-additionaldata.h5
+
+and replace the files in saves/final/ directory.
+
+The first code cell of each notebook contains the code to
+import Google Drive folders. If you wish to use Google
+Colab, please make sure to change the %cd line with the
+actual directory where this folder is placed.
+
 ==========================================================
 REPRODUCIBLE EXPERIMENTS:
 - zero_classifier.ipynb
