@@ -8,7 +8,7 @@
   <img src="https://github.com/alessiapacca/CILroadseg/blob/master/example.png" width="650" title="example of satellite image with his groundtruth segmentation mask">
 </p>
 
-
+The task of the project was to create a classification model able to segment aerial satellite images from ***Google Maps***, separating roads from backgrounds. We present and compare two different methods to tackle this problem, both based on ***Convolutional Neural Networks***: one based on a per-patch classification, and the other based on a fully convolutional network. The best model obtained in Kaggle’s public test data achieved an F1 score of ```0.92105```. <br>
 For details about our implementation, please read the file ```report.pdf```. <br>
 For details about how to reproduce our code, please read the file ```readme.txt```.<br><br>
 
