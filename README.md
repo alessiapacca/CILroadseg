@@ -3,6 +3,10 @@
   ETH Zurich, FS2020 <br>
   N. Kumar, L. Laneve, A. Paccagnella, T. Pegolotti
 </p>    
+
+<p align="center">
+  <img src="https://github.com/alessiapacca/CILroadseg/blob/master/example.png" width="650" title="example of satellite image with his groundtruth segmentation mask">
+</p>
                                                         
 **REPRODUCIBLE EXPERIMENTS**: 
 * ```zero_classifier.ipynb``` <br>
