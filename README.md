@@ -7,6 +7,11 @@
 <p align="center">
   <img src="https://github.com/alessiapacca/CILroadseg/blob/master/example.png" width="650" title="example of satellite image with his groundtruth segmentation mask">
 </p>
+
+
+For details about our implementation, please read the file ```report.pdf```. <br>
+For details about how to reproduce our code, please read the file ```readme.txt```.<br><br>
+
                                                         
 **REPRODUCIBLE EXPERIMENTS**: 
 * ```zero_classifier.ipynb``` <br>
