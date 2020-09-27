@@ -1,4 +1,4 @@
-# Satellite Road Segmentation - Computational Intelligence Lab <br>            
+# Satellite Road Segmentation with Neural Networks - Computational Intelligence Lab <br>            
 <p align="center">
   ETH Zurich, FS2020 <br>
   N. Kumar, L. Laneve, A. Paccagnella, T. Pegolotti
